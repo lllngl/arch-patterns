@@ -1,0 +1,36 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+    api 'org.springframework.boot:spring-boot-starter-web'
+    api 'org.springframework.boot:spring-boot-starter-validation'
+    api 'org.springframework.boot:spring-boot-starter-security'
+    api 'org.springframework.boot:spring-boot-starter-mail'
+    api 'org.springframework.boot:spring-boot-starter-actuator'
+    api 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    api 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    api 'io.github.openfeign:feign-httpclient:13.2'
+
+    api 'org.mapstruct:mapstruct'
+    api 'io.swagger.core.v3:swagger-annotations-jakarta:2.2.31'
+    api 'io.jsonwebtoken:jjwt-api'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson'
+
+    api 'org.apache.kafka:kafka-clients:3.9.1'
+    api 'org.springframework.kafka:spring-kafka:3.2.8'
+    testImplementation 'org.springframework.kafka:spring-kafka-test:3.2.8'
+
+    api 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.9'
+    api 'org.slf4j:slf4j-api:2.0.17'
+    api 'jakarta.validation:jakarta.validation-api:3.0.2'
+    compileOnly 'jakarta.servlet:jakarta.servlet-api:6.1.0'
+
+    api 'org.flywaydb:flyway-core:11.7.2'
+    runtimeOnly 'org.flywaydb:flyway-database-postgresql:11.7.2'
+    runtimeOnly 'org.postgresql:postgresql:42.7.5'
+}
+

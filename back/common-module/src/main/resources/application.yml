@@ -1,0 +1,11 @@
+spring:
+  application:
+    name: common-module
+jwt:
+  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
+  access-token-duration: PT2M    # 2 min
+  refresh-token-duration: P7D    # 7 days
+
+internal:
+  api:
+    key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr

@@ -1,0 +1,42 @@
+server:
+  port: 9000
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:postgresql://localhost:5430/user
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    database: postgresql
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+jwt:
+  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
+  access-token-duration: PT2M    # 2 минуты
+  refresh-token-duration: P7D    # 7 дней
+  refresh-token-replay-blacklist-duration: 15s
+
+internal:
+  api:
+    key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+  level:
+    root: INFO
+    com.internetbank: DEBUG
+    org.springframework.security: TRACE
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql: TRACE
+    org.springframework.aop: TRACE
+    org.springframework.expression: TRACE

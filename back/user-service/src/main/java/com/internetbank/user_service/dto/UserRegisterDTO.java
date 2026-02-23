@@ -1,0 +1,54 @@
+package com.internetbank.user_service.dto;
+
+import com.internetbank.user_service.enums.Gender;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.validation.constraints.*;
+import lombok.*;
+
+import java.time.LocalDate;
+
+@Getter
+@Setter
+@Builder
+@AllArgsConstructor
+@NoArgsConstructor
+public class UserRegisterDTO {
+
+    @Size(min = 1, max = 85, message = "FirstName must be between 1 and 85 characters.")
+    @NotBlank(message = "FirstName is required.")
+    private String firstName;
+
+    @Size(min = 1, max = 85, message = "LastName must be between 1 and 85 characters.")
+    @NotBlank(message = "LastName is required.")
+    private String lastName;
+
+    @Size(max = 85, message = "Patronymic must be less than 85 characters.")
+    private String patronymic;
+
+    @Positive(message = "Phone number must be a positive number.")
+    @Digits(integer = 15, fraction = 0, message = "Phone number can only contain digits and must not exceed 15 digits.")
+    private Long phone;
+
+    @Enumerated(EnumType.STRING)
+    @NotNull(message = "Gender is required.")
+    private Gender gender;
+
+    @Size(min = 5, max = 30, message = "Email must be between 5 and 30 characters.")
+    @NotBlank(message = "Email is required.")
+    @Email(message = "Invalid email format.")
+    @Schema(example = "example@example.com")
+    private String email;
+
+    @NotBlank(message = "Password is required.")
+    @Size(max = 255, message = "Password must be less than 255 characters.")
+    @Schema(example = "string1")
+    @NotBlank(message = "User password cannot be empty")
+    @Pattern(regexp = ".*\\d.*", message = "Password must contain at least one digit")
+    private String password;
+
+    @Past(message = "Birth date must be in the past.")
+    @NotNull(message = "Birth date is required.")
+    private LocalDate birthDate;
+}

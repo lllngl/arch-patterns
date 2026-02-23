@@ -1,0 +1,9 @@
+rootProject.name = 'internet-bank-microservices'
+
+include 'common-module'
+include 'user-service'
+include 'account-service'
+rootProject.name = "internet-bank-microservices"
+
+include("common-module", "user-service", "account-service")
+
