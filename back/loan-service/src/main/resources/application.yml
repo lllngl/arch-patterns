@@ -25,6 +25,12 @@ jwt:
   refresh-token-duration: P7D    # 7 дней
   refresh-token-replay-blacklist-duration: 15s
 
+services:
+  core-service:
+    url: ${CORE_SERVICE_URL:http://localhost:8081}
+  user-service:
+    url: ${USER_SERVICE_URL:http://localhost:8085}
+
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr

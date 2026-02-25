@@ -1,8 +1,10 @@
 package com.internetbank.db.model;
 
+import com.internetbank.db.model.enums.LoanStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +14,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "loan")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class Loan {
@@ -34,4 +37,8 @@ public class Loan {
     @Column(name = "tariff_id", nullable = false)
     @NotNull(message = "Tariff ID cannot be null")
     private UUID tariffId;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private LoanStatus status;
 }

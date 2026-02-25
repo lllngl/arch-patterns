@@ -1,11 +1,13 @@
 package com.internetbank.db.model;
 
 import com.internetbank.db.model.enums.LoanStatus;
+import com.internetbank.db.model.enums.PaymentType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -16,6 +18,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "account_loan")
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 public class AccountLoan {
@@ -35,6 +38,10 @@ public class AccountLoan {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
     private LoanStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    private PaymentType paymentType;
 
     @Column(name = "monthly_payment", nullable = false, precision = 19, scale = 2)
     @DecimalMin(value = "0.00", message = "Payment cannot be negative")
