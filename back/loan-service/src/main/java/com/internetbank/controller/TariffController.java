@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/tariffs")
+@RequestMapping("/api/v1/tariffs")
 @RequiredArgsConstructor
 public class TariffController {
 

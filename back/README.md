@@ -78,11 +78,13 @@ docker compose -f account-service/docker-compose.yml up -d
 
 - User Service: `http://localhost:9000/swagger-ui/index.html`
 - Account Service: `http://localhost:9005/swagger-ui/index.html`
+- Loan Service: `http://localhost:9001/swagger-ui/index.html`
 
 OpenAPI JSON:
 
 - `http://localhost:9000/v3/api-docs`
 - `http://localhost:9005/v3/api-docs`
+- `http://localhost:9001/v3/api-docs`
 
 
 
