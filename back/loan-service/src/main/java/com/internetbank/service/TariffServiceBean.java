@@ -35,7 +35,7 @@ public class TariffServiceBean implements TariffService {
 
         Tariff tariff = tariffRepository.save(tariffMapper.toEntity(request));
 
-        log.info("Tariff created successfully. ID: {}", tariff.getId());
+        log.info("Tariff created successfully. ID: {}", tariff);
 
         return tariffMapper.toResponse(tariff);
     }
@@ -76,9 +76,9 @@ public class TariffServiceBean implements TariffService {
                 .orElseThrow(() -> new NotFoundException("Tariff not found: " + id));
 
         tariff.setActive(true);
-        tariffRepository.save(tariff);
+        Tariff newTariff = tariffRepository.save(tariff);
 
-        log.info("Tariff activated: {}", id);
+        log.info("Tariff activated: {}", newTariff);
     }
 
     @Override

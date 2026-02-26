@@ -1,16 +1,18 @@
 server:
-  port: 8090
+  port: 9001
 spring:
   application:
     name: loan-service
   datasource:
-    url: jdbc:postgresql://localhost:5430/loan
+    url: jdbc:postgresql://localhost:5432/loan
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
   jpa:
     hibernate:
       ddl-auto: validate
@@ -25,12 +27,6 @@ jwt:
   refresh-token-duration: P7D    # 7 дней
   refresh-token-replay-blacklist-duration: 15s
 
-services:
-  core-service:
-    url: ${CORE_SERVICE_URL:http://localhost:8081}
-  user-service:
-    url: ${USER_SERVICE_URL:http://localhost:8085}
-
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
@@ -41,8 +37,3 @@ logging:
   level:
     root: INFO
     com.internetbank: DEBUG
-    org.springframework.security: TRACE
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql: TRACE
-    org.springframework.aop: TRACE
-    org.springframework.expression: TRACE

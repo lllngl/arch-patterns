@@ -31,7 +31,7 @@ public class Tariff {
     @DecimalMin(value = "0.00", message = "Rate cannot be negative")
     @DecimalMax(value = "1.00", message = "Rate cannot be greater than 1.00")
     @Digits(integer = 1, fraction = 2, message = "Rate must have up to 1 digits before and 2 after the decimal point")
-    @NotNull(message = "Amount cannot be null")
+    @NotNull(message = "Rate cannot be null")
     private BigDecimal rate;
 
     @Column(name = "min_amount", nullable = false, precision = 19, scale = 2)

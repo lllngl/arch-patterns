@@ -12,7 +12,7 @@ public record TariffResponse(
         BigDecimal maxAmount,
         Integer minTermMonths,
         Integer maxTermMonths,
-        boolean isActive
+        boolean active
 
 ) {
 }

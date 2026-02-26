@@ -5,7 +5,6 @@ import com.internetbank.dto.response.TariffResponse;
 import com.internetbank.service.TariffService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +23,7 @@ public class TariffController {
     @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<TariffResponse> createTariff(@Valid @RequestBody CreateTariffRequest request) {
         TariffResponse response = tariffService.createTariff(request);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping

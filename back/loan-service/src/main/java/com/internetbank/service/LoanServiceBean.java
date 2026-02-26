@@ -1,7 +1,7 @@
 package com.internetbank.service;
 
-import com.internetbank.client.CoreServiceClient;
-import com.internetbank.client.UserServiceClient;
+import com.internetbank.common.clients.AccountServiceClient;
+import com.internetbank.common.clients.UserAppClient;
 import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.exceptions.BadRequestException;
@@ -35,8 +35,8 @@ public class LoanServiceBean implements LoanService {
     private final LoanRepository loanRepository;
     private final AccountLoanRepository accountLoanRepository;
     private final TariffRepository tariffRepository;
-    private final CoreServiceClient coreServiceClient;
-    private final UserServiceClient userServiceClient;
+    private final AccountServiceClient accountServiceClient;
+    private final UserAppClient userAppClient;
     private final LoanMapper loanMapper;
     private final PaymentStrategyFactory paymentStrategyFactory;
 
@@ -45,15 +45,17 @@ public class LoanServiceBean implements LoanService {
     public LoanResponse createLoan(CreateLoanRequest request) {
         log.info("Creating loan for account: {}", request.accountId());
 
-        ResponseEntity<UserDTO> userResponse = userServiceClient.getUser(request.userId());
-        if (!userResponse.getStatusCode().is2xxSuccessful() || userResponse.getBody() == null) {
+        UserDTO userResponse = userAppClient.getUserById(request.userId());
+        if (userResponse == null) {
             throw new NotFoundException("User not found: " + request.userId());
         }
 
-        ResponseEntity<AccountDTO> accountResponse = coreServiceClient.getAccount(request.accountId());
+        ResponseEntity<AccountDTO> accountResponse = accountServiceClient.getAccount(request.accountId(), userResponse.id());
         if (!accountResponse.getStatusCode().is2xxSuccessful() || accountResponse.getBody() == null) {
             throw new NotFoundException("Account not found: " + request.accountId());
         }
+
+        log.info("0");
 
         AccountDTO account = accountResponse.getBody();
         if (!account.userId().equals(request.userId())) {
@@ -76,13 +78,18 @@ public class LoanServiceBean implements LoanService {
                     tariff.getMinTermMonths(), tariff.getMaxTermMonths()));
         }
 
+        log.info("1");
+
         Loan loan = Loan.builder()
                 .amount(request.amount())
                 .termMonths(request.termMonths())
                 .tariffId(tariff.getId())
+                .status(LoanStatus.PENDING)
                 .build();
 
         loan = loanRepository.save(loan);
+
+        log.info("2");
 
         PaymentStrategy strategy = paymentStrategyFactory.getStrategy(request.paymentType());
         BigDecimal monthlyPayment = strategy.calculateMonthlyPayment(
@@ -98,6 +105,7 @@ public class LoanServiceBean implements LoanService {
                 .monthlyPayment(monthlyPayment)
                 .remainingAmount(request.amount())
                 .nextPaymentDate(LocalDate.now().plusMonths(1))
+                .paymentType(request.paymentType())
                 .paymentDate(LocalDate.now())
                 .createdAt(LocalDate.now())
                 .build();

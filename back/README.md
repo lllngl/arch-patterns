@@ -5,6 +5,7 @@
 - `common-module` — общие DTO, security, утилиты. Подробности в `common-module/README.md`.
 - `user-service` — пользователи, аутентификация, роли.
 - `account-service` — счета и операции по счетам.
+- `loan-service` — кредиты и взаимодействия с ними.
 
 ## Требования
 

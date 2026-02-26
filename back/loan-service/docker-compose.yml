@@ -1,0 +1,16 @@
+services:
+  db:
+    container_name: loan-db
+    image: postgres:17
+    hostname: loan-db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=loan
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5437:5432"
+
+volumes:
+  db-data:

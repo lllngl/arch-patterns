@@ -13,13 +13,9 @@ import org.mapstruct.ReportingPolicy;
 public interface LoanMapper {
 
     @Mapping(source = "loan.id", target = "id")
-    @Mapping(source = "accountLoan.accountId", target = "accountId")
     @Mapping(source = "loan.amount", target = "amount")
     @Mapping(source = "loan.termMonths", target = "termMonths")
-    @Mapping(source = "accountLoan.monthlyPayment", target = "monthlyPayment")
-    @Mapping(source = "accountLoan.remainingAmount", target = "remainingAmount")
     @Mapping(source = "accountLoan.status", target = "status")
-    @Mapping(source = "accountLoan.nextPaymentDate", target = "nextPaymentDate")
     @Mapping(source = "accountLoan.createdAt", target = "createdAt")
     @Mapping(source = "tariff", target = "tariff")
     LoanResponse toLoanResponse(Loan loan, AccountLoan accountLoan, Tariff tariff);

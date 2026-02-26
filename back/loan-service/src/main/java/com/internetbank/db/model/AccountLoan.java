@@ -36,11 +36,11 @@ public class AccountLoan {
     private UUID loanId;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(nullable = false)
     private LoanStatus status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
+    @Column(name = "payment_type", nullable = false)
     private PaymentType paymentType;
 
     @Column(name = "monthly_payment", nullable = false, precision = 19, scale = 2)
