@@ -101,7 +101,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/block")
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('EMPLOYEE') and #userId != principal.id")
     public ResponseEntity<?> blockProfileById(
             @PathVariable("userId") @P("userId") UUID userId) {
         userService.blockProfileById(userId);
@@ -109,7 +109,7 @@ public class UserController {
     }
 
     @PostMapping("/{userId}/unblock")
-    @PreAuthorize("hasRole('EMPLOYEE')")
+    @PreAuthorize("hasRole('EMPLOYEE') and #userId != principal.id")
     public ResponseEntity<?> unblockProfileById(
             @PathVariable("userId") @P("userId") UUID userId) {
         userService.unblockProfileById(userId);

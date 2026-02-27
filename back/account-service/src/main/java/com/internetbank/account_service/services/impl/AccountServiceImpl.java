@@ -16,6 +16,7 @@ import com.internetbank.account_service.repositories.AccountTransactionRepositor
 import com.internetbank.account_service.services.AccountService;
 import com.internetbank.common.clients.UserAppClient;
 import com.internetbank.common.dtos.UserDTO;
+import com.internetbank.common.enums.RoleName;
 import com.internetbank.common.exceptions.BadRequestException;
 import com.internetbank.common.exceptions.NotFoundException;
 import com.internetbank.common.security.ResourceAccessService;
@@ -47,7 +48,10 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional
     public AccountDTO createAccount(UUID userId, AccountCreateRequest request) {
-        ensureUserExists(userId);
+        UserDTO targetUser = userAppClient.getUserById(userId);
+        if (targetUser.role() == RoleName.EMPLOYEE) {
+            throw new BadRequestException("Cannot create an account for employee.");
+        }
 
         Account account = accountMapper.toEntity(request == null ? new AccountCreateRequest(null) : request);
         account.setUserId(userId);
