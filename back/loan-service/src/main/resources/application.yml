@@ -4,7 +4,7 @@ spring:
   application:
     name: loan-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/loan
+    url: jdbc:postgresql://localhost:5437/loan
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
