@@ -1,6 +1,7 @@
 package com.internetbank.account_service.controllers;
 
 import com.internetbank.account_service.dtos.AccountCreateRequest;
+import com.internetbank.common.clients.UserAppClient;
 import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.AccountTransactionDTO;
 import com.internetbank.account_service.dtos.MoneyOperationRequest;
@@ -45,6 +46,7 @@ public class AccountController {
 
     private final AccountService accountService;
     private final PageableUtils pageableUtils;
+    private final UserAppClient userAppClient;
 
     @PostMapping("/{userId}")
     @PreAuthorize("hasRole('EMPLOYEE') or #userId == principal.id")
@@ -151,6 +153,17 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping("/{accountId}/internal")
+    @PreAuthorize("@internalSecurity.hasInternalAccess()")
+    public ResponseEntity<AccountDTO> getAccountByIdInternal(
+            @PathVariable("accountId") UUID accountId,
+            @RequestParam("userId") UUID userId) {
+
+        UserDTO user = userAppClient.getUserById(userId);
+        AccountDTO response = accountService.getAccountById(accountId, user);
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping
     @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<Page<AccountDTO>> getAllAccounts(
@@ -161,6 +174,28 @@ public class AccountController {
         Page<AccountDTO> response = accountService.getAllAccounts(pageable, statuses);
         return ResponseEntity.ok(response);
 
+    }
+
+    @PatchMapping("/{accountId}/internal/deposit")
+    @PreAuthorize("@internalSecurity.hasInternalAccess()")
+    public ResponseEntity<AccountDTO> internalDeposit(
+            @PathVariable("accountId") UUID accountId,
+            @RequestBody @Valid MoneyOperationRequest request,
+            @RequestParam("userId") UUID userId) {
+        UserDTO user = userAppClient.getUserById(userId);
+        AccountDTO response = accountService.deposit(accountId, request, user);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{accountId}/internal/withdraw")
+    @PreAuthorize("@internalSecurity.hasInternalAccess()")
+    public ResponseEntity<AccountDTO> internalWithdraw(
+            @PathVariable("accountId") UUID accountId,
+            @RequestBody @Valid MoneyOperationRequest request,
+            @RequestParam("userId") UUID userId) {
+        UserDTO user = userAppClient.getUserById(userId);
+        AccountDTO response = accountService.withdraw(accountId, request, user);
+        return ResponseEntity.ok(response);
     }
 }
 

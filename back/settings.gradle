@@ -6,4 +6,5 @@ include 'account-service'
 rootProject.name = "internet-bank-microservices"
 
 include("common-module", "user-service", "account-service")
+include 'loan-service'
 

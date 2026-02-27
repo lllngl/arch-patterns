@@ -1,16 +1,18 @@
 server:
-  port: 9005
+  port: 9001
 spring:
   application:
-    name: account-service
+    name: loan-service
   datasource:
-    url: jdbc:postgresql://localhost:5435/account
+    url: jdbc:postgresql://localhost:5437/loan
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
   flyway:
     enabled: true
     locations: classpath:db/migration
+    baseline-on-migrate: true
+    baseline-version: 0
   jpa:
     hibernate:
       ddl-auto: validate
@@ -19,20 +21,24 @@ spring:
     properties:
       hibernate:
         format_sql: true
-  jackson:
-    serialization:
-      write-dates-as-timestamps: false
-    date-format: yyyy-MM-dd HH:mm:ss
+jwt:
+  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
+  access-token-duration: PT2M    # 2 минуты
+  refresh-token-duration: P7D    # 7 дней
+  refresh-token-replay-blacklist-duration: 15s
 
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
 
-jwt:
-  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
-  access-token-duration: PT2M    # 2 min
-  refresh-token-duration: P7D    # 7 days
-  refresh-token-replay-blacklist-duration: 15s
+scheduler:
+  enabled: true
+
+  payment:
+    cron: "0 * * * * *"
+
+  pending:
+    cron: "0 * * * * *"
 
 logging:
   pattern:
@@ -40,4 +46,3 @@ logging:
   level:
     root: INFO
     com.internetbank: DEBUG
-
