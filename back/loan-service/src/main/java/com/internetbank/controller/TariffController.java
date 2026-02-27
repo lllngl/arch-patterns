@@ -1,15 +1,17 @@
 package com.internetbank.controller;
 
+import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.dto.request.CreateTariffRequest;
 import com.internetbank.dto.response.TariffResponse;
 import com.internetbank.service.TariffService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -28,20 +30,17 @@ public class TariffController {
 
     @GetMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<List<TariffResponse>> getAllTariffs() {
-        return ResponseEntity.ok(tariffService.getAllTariffs());
+    public ResponseEntity<Page<TariffResponse>> getAllTariffs(
+            @ParameterObject PageRequestParams pageParams,
+            @RequestParam(required = false) Boolean active
+            ) {
+        return ResponseEntity.ok(tariffService.getAllTariffs(pageParams, active));
     }
 
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<TariffResponse> getTariff(@PathVariable UUID id) {
         return ResponseEntity.ok(tariffService.getTariff(id));
-    }
-
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('EMPLOYEE')")
-    public ResponseEntity<TariffResponse> updateTariff(@PathVariable UUID id, @Valid @RequestBody CreateTariffRequest request) {
-        return ResponseEntity.ok(tariffService.updateTariff(id, request));
     }
 
     @PatchMapping("/{id}/activate")

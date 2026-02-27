@@ -1,9 +1,7 @@
 package com.internetbank.mapper;
 
-import com.internetbank.db.model.AccountLoan;
 import com.internetbank.db.model.Loan;
 import com.internetbank.db.model.Tariff;
-import com.internetbank.dto.response.AccountLoanResponse;
 import com.internetbank.dto.response.LoanResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -13,22 +11,17 @@ import org.mapstruct.ReportingPolicy;
 public interface LoanMapper {
 
     @Mapping(source = "loan.id", target = "id")
+    @Mapping(source = "loan.userId", target = "userId")
+    @Mapping(source = "loan.accountId", target = "accountId")
     @Mapping(source = "loan.amount", target = "amount")
     @Mapping(source = "loan.termMonths", target = "termMonths")
-    @Mapping(source = "accountLoan.status", target = "status")
-    @Mapping(source = "accountLoan.createdAt", target = "createdAt")
+    @Mapping(source = "loan.status", target = "status")
+    @Mapping(source = "loan.paymentType", target = "paymentType")
+    @Mapping(source = "loan.monthlyPayment", target = "monthlyPayment")
+    @Mapping(source = "loan.remainingAmount", target = "remainingAmount")
+    @Mapping(source = "loan.nextPaymentDate", target = "nextPaymentDate")
+    @Mapping(source = "loan.paymentDate", target = "paymentDate")
+    @Mapping(source = "loan.createdAt", target = "createdAt")
     @Mapping(source = "tariff", target = "tariff")
-    LoanResponse toLoanResponse(Loan loan, AccountLoan accountLoan, Tariff tariff);
-
-    @Mapping(source = "accountLoan.id", target = "id")
-    @Mapping(source = "accountLoan.accountId", target = "accountId")
-    @Mapping(source = "accountLoan.loanId", target = "loanId")
-    @Mapping(source = "accountLoan.status", target = "status")
-    @Mapping(source = "accountLoan.monthlyPayment", target = "monthlyPayment")
-    @Mapping(source = "accountLoan.remainingAmount", target = "remainingAmount")
-    @Mapping(source = "accountLoan.nextPaymentDate", target = "nextPaymentDate")
-    @Mapping(source = "accountLoan.paymentDate", target = "paymentDate")
-    @Mapping(source = "accountLoan.createdAt", target = "createdAt")
-    @Mapping(target = "loanDetails", expression = "java(toLoanResponse(loan, accountLoan, tariff))")
-    AccountLoanResponse toAccountLoanResponse(AccountLoan accountLoan, Loan loan, Tariff tariff);
+    LoanResponse toLoanResponse(Loan loan, Tariff tariff);
 }

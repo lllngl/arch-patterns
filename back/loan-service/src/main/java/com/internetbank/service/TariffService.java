@@ -1,20 +1,19 @@
 package com.internetbank.service;
 
+import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.dto.request.CreateTariffRequest;
 import com.internetbank.dto.response.TariffResponse;
+import org.springframework.data.domain.Page;
 
-import java.util.List;
 import java.util.UUID;
 
 public interface TariffService {
 
     TariffResponse createTariff(CreateTariffRequest request);
 
-    List<TariffResponse> getAllTariffs();
+    Page<TariffResponse> getAllTariffs(PageRequestParams pageParams, Boolean active);
 
     TariffResponse getTariff(UUID id);
-
-    TariffResponse updateTariff(UUID id, CreateTariffRequest request);
 
     void activateTariff(UUID id);
 

@@ -175,5 +175,27 @@ public class AccountController {
         return ResponseEntity.ok(response);
 
     }
+
+    @PatchMapping("/{accountId}/internal/deposit")
+    @PreAuthorize("@internalSecurity.hasInternalAccess()")
+    public ResponseEntity<AccountDTO> internalDeposit(
+            @PathVariable("accountId") UUID accountId,
+            @RequestBody @Valid MoneyOperationRequest request,
+            @RequestParam("userId") UUID userId) {
+        UserDTO user = userAppClient.getUserById(userId);
+        AccountDTO response = accountService.deposit(accountId, request, user);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{accountId}/internal/withdraw")
+    @PreAuthorize("@internalSecurity.hasInternalAccess()")
+    public ResponseEntity<AccountDTO> internalWithdraw(
+            @PathVariable("accountId") UUID accountId,
+            @RequestBody @Valid MoneyOperationRequest request,
+            @RequestParam("userId") UUID userId) {
+        UserDTO user = userAppClient.getUserById(userId);
+        AccountDTO response = accountService.withdraw(accountId, request, user);
+        return ResponseEntity.ok(response);
+    }
 }
 

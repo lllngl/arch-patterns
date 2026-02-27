@@ -1,7 +1,9 @@
 package com.internetbank.service;
 
+import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.common.exceptions.BadRequestException;
 import com.internetbank.common.exceptions.NotFoundException;
+import com.internetbank.common.parameters.PageableUtils;
 import com.internetbank.db.model.Tariff;
 import com.internetbank.db.repository.TariffRepository;
 import com.internetbank.dto.request.CreateTariffRequest;
@@ -10,11 +12,11 @@ import com.internetbank.mapper.TariffMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -23,6 +25,7 @@ public class TariffServiceBean implements TariffService {
 
     private final TariffRepository tariffRepository;
     private final TariffMapper tariffMapper;
+    private final PageableUtils pageableUtils;
 
     @Override
     @Transactional
@@ -41,30 +44,20 @@ public class TariffServiceBean implements TariffService {
     }
 
     @Override
-    public List<TariffResponse> getAllTariffs() {
-        return tariffRepository.findAll().stream()
-                .map(tariffMapper::toResponse)
-                .collect(Collectors.toList());
+    public Page<TariffResponse> getAllTariffs(PageRequestParams pageParams, Boolean active) {
+        Pageable pageable = pageableUtils.of(pageParams);
+
+        Page<Tariff> tariffsPage = active != null
+                ? tariffRepository.findByActive(active, pageable)
+                : tariffRepository.findAll(pageable);
+
+        return tariffsPage.map(tariffMapper::toResponse);
     }
 
     @Override
     public TariffResponse getTariff(UUID id) {
         Tariff tariff = tariffRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Tariff not found: " + id));
-
-        return tariffMapper.toResponse(tariff);
-    }
-
-    @Override
-    @Transactional
-    public TariffResponse updateTariff(UUID id, CreateTariffRequest request) {
-        Tariff tariff = tariffRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Tariff not found: " + id));
-
-        tariffMapper.updateEntity(request, tariff);
-        tariff = tariffRepository.save(tariff);
-
-        log.info("Tariff updated: {}", id);
 
         return tariffMapper.toResponse(tariff);
     }

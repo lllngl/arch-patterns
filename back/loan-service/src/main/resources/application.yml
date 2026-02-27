@@ -4,7 +4,7 @@ spring:
   application:
     name: loan-service
   datasource:
-    url: jdbc:postgresql://localhost:5437/loan
+    url: jdbc:postgresql://localhost:5432/loan
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
@@ -30,6 +30,15 @@ jwt:
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
+
+scheduler:
+  enabled: true
+
+  payment:
+    cron: "0 * * * * *"
+
+  pending:
+    cron: "0 * * * * *"
 
 logging:
   pattern:

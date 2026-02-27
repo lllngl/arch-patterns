@@ -9,6 +9,9 @@ import java.util.UUID;
 
 public record RepayLoanRequest (
 
+        @NotNull(message = "User ID is required")
+        UUID userId,
+
         @NotNull(message = "Account ID is required")
         UUID accountId,
 
