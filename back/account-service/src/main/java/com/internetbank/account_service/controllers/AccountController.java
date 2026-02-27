@@ -82,7 +82,7 @@ public class AccountController {
     }
 
     @PatchMapping("/{accountId}/deposit")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<AccountDTO> deposit(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
@@ -92,7 +92,7 @@ public class AccountController {
     }
 
     @PatchMapping("/{accountId}/withdraw")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<AccountDTO> withdraw(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
