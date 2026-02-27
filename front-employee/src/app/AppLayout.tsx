@@ -13,9 +13,9 @@ import {
 } from "@/components/ui/sidebar";
 
 import { AppBreadcrumbs } from "./AppBreadcrumbs";
-import { HomeIcon } from "lucide-react";
 import { NavUser } from "@/components/custom/NavUser";
-import { UserIcon } from "lucide-react";
+import { HomeIcon, Users, Wallet, UserIcon } from "lucide-react";
+import { Toaster } from "@/components/ui/sonner";
 
 const items = [
   {
@@ -24,17 +24,21 @@ const items = [
     icon: HomeIcon,
   },
   {
+    title: "Пользователи",
+    url: "/users",
+    icon: Users,
+  },
+  {
+    title: "Счета",
+    url: "/accounts",
+    icon: Wallet,
+  },
+  {
     title: "Профиль",
     url: "/profile",
     icon: UserIcon,
   },
 ];
-
-const user = {
-  name: "Test User",
-  email: "m@example.com",
-  avatar: "",
-};
 
 export default function AppLayout() {
   const { pathname } = useLocation();
@@ -66,7 +70,7 @@ export default function AppLayout() {
           </SidebarMenu>
         </SidebarContent>
         <SidebarFooter>
-          <NavUser user={user} />
+          <NavUser />
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
@@ -77,10 +81,11 @@ export default function AppLayout() {
             <AppBreadcrumbs />
           </nav>
         </div>
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-auto">
           <Outlet />
         </div>
       </SidebarInset>
+      <Toaster richColors position="bottom-right" />
     </SidebarProvider>
   );
 }
