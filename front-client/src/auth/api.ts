@@ -65,7 +65,7 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 }
 
-async function request<T>(url: string, options: RequestOptions = {}): Promise<T> {
+export async function apiRequest<T>(url: string, options: RequestOptions = {}): Promise<T> {
   const { requiresAuth = true, headers, ...rest } = options;
   const requestHeaders = new Headers(headers);
   requestHeaders.set("Content-Type", "application/json");
@@ -114,7 +114,7 @@ async function request<T>(url: string, options: RequestOptions = {}): Promise<T>
 
 export const authApi = {
   login(data: AuthRequest): Promise<AuthResponse> {
-    return request<AuthResponse>("/api/v1/auth/authenticate", {
+    return apiRequest<AuthResponse>("/api/v1/auth/authenticate", {
       method: "POST",
       requiresAuth: false,
       body: JSON.stringify(data),
@@ -122,7 +122,7 @@ export const authApi = {
   },
 
   logout(refreshToken: string): Promise<void> {
-    return request<void>("/api/v1/auth/logout", {
+    return apiRequest<void>("/api/v1/auth/logout", {
       method: "POST",
       requiresAuth: false,
       body: JSON.stringify({ refreshToken }),
@@ -130,7 +130,7 @@ export const authApi = {
   },
 
   getMyProfile(): Promise<UserProfile> {
-    return request<UserProfile>("/api/v1/users/profile");
+    return apiRequest<UserProfile>("/api/v1/users/profile");
   },
 };
 

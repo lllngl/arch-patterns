@@ -1,22 +1,263 @@
 .main-page {
-  border-radius: 12px;
-  background-color: #ffffff;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .main-page-title {
   margin: 0;
-  font-size: 28px;
+  font-size: 30px;
   color: #111827;
 }
 
-.main-page-text {
-  margin: 12px 0 0;
-  color: #374151;
+.main-page-subtitle {
+  margin: 0;
+  color: #4b5563;
 }
 
-.main-page-note {
-  margin: 12px 0 0;
+.banner {
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.banner-info {
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+
+.banner-error {
+  background-color: #fef2f2;
+  color: #b91c1c;
+}
+
+.banner-success {
+  background-color: #ecfdf5;
+  color: #047857;
+}
+
+.grid-two {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  padding: 16px;
+}
+
+.card-title {
+  margin: 0 0 12px;
+  font-size: 20px;
+}
+
+.muted {
+  margin: 0;
   color: #6b7280;
+}
+
+.inline-form {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 14px;
+}
+
+.field:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+.button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.button-primary {
+  background-color: #2563eb;
+  color: #ffffff;
+}
+
+.button-secondary {
+  background-color: #6b7280;
+  color: #ffffff;
+}
+
+.button-danger {
+  background-color: #dc2626;
+  color: #ffffff;
+}
+
+.button-small {
+  padding: 6px 9px;
+  font-size: 12px;
+}
+
+.account-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.account-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.account-item-active {
+  border-color: #2563eb;
+  background-color: #eff6ff;
+}
+
+.account-select {
+  background: none;
+  border: none;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  cursor: pointer;
+  color: #111827;
+  flex: 1;
+}
+
+.account-name {
+  font-weight: 600;
+}
+
+.account-balance {
+  font-size: 14px;
+  color: #1f2937;
+}
+
+.badge {
+  width: fit-content;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.badge-open {
+  background-color: #dcfce7;
+  color: #166534;
+}
+
+.badge-closed {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+
+.selected-account {
+  display: flex;
+  justify-content: space-between;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.transaction-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.transaction-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.transaction-type {
+  margin: 0;
+  font-weight: 600;
+}
+
+.transaction-date {
+  margin: 4px 0 0;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.amount-plus {
+  margin: 0;
+  color: #059669;
+  font-weight: 700;
+}
+
+.amount-minus {
+  margin: 0;
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.loan-table-wrap {
+  overflow-x: auto;
+}
+
+.loan-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.loan-table th,
+.loan-table td {
+  border-bottom: 1px solid #e5e7eb;
+  text-align: left;
+  padding: 8px;
+  font-size: 13px;
+}
+
+.loan-table th {
+  color: #374151;
+  font-weight: 700;
+}
+
+@media (max-width: 980px) {
+  .grid-two {
+    grid-template-columns: 1fr;
+  }
+
+  .inline-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
