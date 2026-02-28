@@ -1,23 +1,55 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth/AuthContext";
+import "./AppLayout.css";
 
 export const AppLayout = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login", { replace: true });
+  };
+
   return (
     <div className="app-layout">
-      <header className="bg-blue-600 text-white p-4">
-        <nav>
-          <ul className="flex space-x-4">
-            <li><Link to="/" className="hover:underline">Главная</Link></li>
-            <li><Link to="/profile" className="hover:underline">Профиль</Link></li>
-            <li><Link to="/login" className="hover:underline">Вход</Link></li>
-          </ul>
-        </nav>
+      <header className="header">
+        <div className="header-container">
+          <Link to="/" className="logo">
+            Internet Bank
+          </Link>
+
+          <nav>
+            <ul className="nav-list">
+              <li>
+                <NavLink to="/" end className={({ isActive }) => `nav-link${isActive ? " nav-link-active" : ""}`}>
+                  Главная
+                </NavLink>
+              </li>
+              <li>
+                <NavLink to="/profile" className={({ isActive }) => `nav-link${isActive ? " nav-link-active" : ""}`}>
+                  Профиль
+                </NavLink>
+              </li>
+            </ul>
+          </nav>
+
+          <div className="header-actions">
+            <span className="user-email">{user?.email}</span>
+            <button type="button" className="logout-button" onClick={handleLogout}>
+              Выйти
+            </button>
+          </div>
+        </div>
       </header>
-      
-      <main className="container mx-auto p-4">
-        <Outlet />
+
+      <main className="main">
+        <div className="container">
+          <Outlet />
+        </div>
       </main>
-      
-      <footer className="bg-gray-200 p-4 mt-8">
+
+      <footer className="footer">
         <p>© 2026 Интернет-банк для клиентов</p>
       </footer>
     </div>

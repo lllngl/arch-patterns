@@ -14,7 +14,7 @@ export default defineConfig([
       parser: tseslint.parser,
       parserOptions: {
         ecmaFeatures: { jsx: true },
-        project: ['./tsconfig.json', './tsconfig.app.json'],
+        project: ['./tsconfig.json', './tsconfig.app.json', './tsconfig.node.json'],
       },
       globals: globals.browser,
     },

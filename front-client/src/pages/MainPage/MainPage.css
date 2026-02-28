@@ -1,0 +1,22 @@
+.main-page {
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  padding: 24px;
+}
+
+.main-page-title {
+  margin: 0;
+  font-size: 28px;
+  color: #111827;
+}
+
+.main-page-text {
+  margin: 12px 0 0;
+  color: #374151;
+}
+
+.main-page-note {
+  margin: 12px 0 0;
+  color: #6b7280;
+}

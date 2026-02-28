@@ -1,8 +1,13 @@
+import "./MainPage.css";
+
 export const MainPage = () => {
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold">Главная страница клиента</h1>
-      <p>Добро пожаловать в клиентское приложение интернет-банка!</p>
-    </div>
+    <section className="main-page">
+      <h1 className="main-page-title">Главная страница клиента</h1>
+      <p className="main-page-text">Добро пожаловать в клиентское приложение интернет-банка.</p>
+      <p className="main-page-note">
+        Следующим шагом здесь добавим операции по счетам, кредитам и историю транзакций.
+      </p>
+    </section>
   );
 };
