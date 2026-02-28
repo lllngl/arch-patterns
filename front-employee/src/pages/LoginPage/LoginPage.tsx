@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/auth";
 import { Loader2 } from "lucide-react";
 import axios from "axios";
+import { localizeError } from "@/lib/error-messages";
 
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
@@ -26,8 +27,7 @@ export default function LoginPage() {
       navigate("/", { replace: true });
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        const msg = err.response?.data?.message;
-        setError(msg || "Неверный email или пароль");
+        setError(localizeError(err.response?.data?.message));
       } else {
         setError("Произошла ошибка. Попробуйте позже.");
       }

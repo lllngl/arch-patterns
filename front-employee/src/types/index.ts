@@ -98,3 +98,57 @@ export interface ApiErrorResponse {
   message: string;
   path: string;
 }
+
+export type LoanStatus = "PENDING" | "ACTIVE" | "PAID" | "OVERDUE" | "REJECTED";
+export type PaymentType = "ANNUITY";
+
+export interface TariffResponse {
+  id: string;
+  name: string;
+  rate: number;
+  minAmount: number;
+  maxAmount: number;
+  minTermMonths: number;
+  maxTermMonths: number;
+  active: boolean;
+}
+
+export interface LoanResponse {
+  id: string;
+  userId: string;
+  accountId: string;
+  amount: number;
+  termMonths: number;
+  status: LoanStatus;
+  paymentType: PaymentType;
+  monthlyPayment: number;
+  remainingAmount: number;
+  nextPaymentDate: string | null;
+  paymentDate: string | null;
+  createdAt: string;
+  tariff: TariffResponse;
+}
+
+export interface CreateTariffRequest {
+  name: string;
+  rate: number;
+  minAmount: number;
+  maxAmount: number;
+  minTermMonths: number;
+  maxTermMonths: number;
+}
+
+export interface CreateLoanRequest {
+  userId: string;
+  accountId: string;
+  amount: number;
+  termMonths: number;
+  tariffId: string;
+  paymentType: PaymentType;
+}
+
+export interface RepayLoanRequest {
+  userId: string;
+  accountId: string;
+  amount: number;
+}

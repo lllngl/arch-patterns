@@ -24,6 +24,14 @@ export default defineConfig({
         target: "http://localhost:9005",
         changeOrigin: true,
       },
+      "/api/v1/loan": {
+        target: "http://localhost:9001",
+        changeOrigin: true,
+      },
+      "/api/v1/tariffs": {
+        target: "http://localhost:9001",
+        changeOrigin: true,
+      },
     },
   },
 });
