@@ -1,0 +1,87 @@
+/* Общий layout */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  color: #1f2937;
+  background-color: #f9fafb;
+}
+
+/* Header */
+.header {
+  background-color: #2563eb;
+  color: white;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.header-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 12px 16px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Лого */
+.logo {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Навигация */
+.nav-list {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+/* Ссылки */
+.nav-link {
+  text-decoration: none;
+  color: white;
+  font-size: 14px;
+  transition: opacity 0.2s;
+}
+
+.nav-link:hover {
+  opacity: 0.7;
+}
+
+/* Кнопка входа */
+.nav-button {
+  background: white;
+  color: #2563eb;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.nav-button:hover {
+  background: #e5e7eb;
+}
+
+/* Main */
+.main {
+  flex: 1;
+}
+
+.container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 20px 16px;
+}
+
+/* Footer */
+.footer {
+  background-color: #e5e7eb;
+  text-align: center;
+  padding: 12px;
+  margin-top: 20px;
+  font-size: 14px;
+}
