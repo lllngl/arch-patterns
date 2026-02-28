@@ -35,6 +35,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/users/**").authenticated()
                         .requestMatchers("/api/v1/auth/**").permitAll()
                         .requestMatchers("/api/v1/accounts/**").authenticated()
+                        .requestMatchers("/api/v1/loan/**").authenticated()
+                        .requestMatchers("/api/v1/tariffs/**").authenticated()
                         .anyRequest().permitAll()
                 )
                 .sessionManagement(session -> session
