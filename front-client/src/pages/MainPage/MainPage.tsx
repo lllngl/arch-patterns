@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import { ApiError } from "../../auth/api";
 import { useAuth } from "../../auth/AuthContext";
 import { bankingApi } from "../../banking/api";
@@ -47,6 +48,7 @@ export const MainPage = () => {
   const [repayLoanId, setRepayLoanId] = useState("");
   const [repayAccountId, setRepayAccountId] = useState("");
   const [repayAmount, setRepayAmount] = useState("");
+  const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -328,37 +330,62 @@ export const MainPage = () => {
         </article>
 
         <article className="card">
-          <h2 className="card-title">Мои счета</h2>
-          {accounts.length === 0 ? (
+          <h2 className="card-title">Текущий счет</h2>
+          {!selectedAccount ? (
             <p className="muted">Счета пока отсутствуют.</p>
           ) : (
-            <ul className="account-list">
-              {accounts.map((account) => (
-                <li key={account.id} className={`account-item${account.id === selectedAccountId ? " account-item-active" : ""}`}>
+            <div className="stack">
+              <div className="current-account-card">
+                <p className="current-account-name">{selectedAccount.name || "Без названия"}</p>
+                <p className="current-account-balance">{formatMoney(selectedAccount.balance)}</p>
+                <span className={`badge ${selectedAccount.status === "OPEN" ? "badge-open" : "badge-closed"}`}>
+                  {selectedAccount.status}
+                </span>
+              </div>
+
+              <div className="account-actions-row">
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  onClick={() => setIsAccountPickerOpen((value) => !value)}
+                >
+                  {isAccountPickerOpen ? "Скрыть выбор счета" : "Выбрать другой счет"}
+                </button>
+
+                {selectedAccount.status === "OPEN" && (
                   <button
-                    className="account-select"
+                    className="button button-danger"
                     type="button"
-                    onClick={() => setSelectedAccountId(account.id)}
+                    onClick={() => void handleCloseAccount(selectedAccount.id)}
+                    disabled={isSubmitting}
                   >
-                    <span className="account-name">{account.name || "Без названия"}</span>
-                    <span className="account-balance">{formatMoney(account.balance)}</span>
-                    <span className={`badge ${account.status === "OPEN" ? "badge-open" : "badge-closed"}`}>
-                      {account.status}
-                    </span>
+                    Закрыть текущий счет
                   </button>
-                  {account.status === "OPEN" && (
+                )}
+              </div>
+
+              {isAccountPickerOpen && (
+                <div className="account-picker-panel">
+                  {accounts.map((account) => (
                     <button
-                      className="button button-danger button-small"
+                      key={account.id}
                       type="button"
-                      onClick={() => void handleCloseAccount(account.id)}
-                      disabled={isSubmitting}
+                      className={`account-picker-item${account.id === selectedAccountId ? " account-picker-item-active" : ""}`}
+                      onClick={() => {
+                        setSelectedAccountId(account.id);
+                        setIsAccountPickerOpen(false);
+                      }}
                     >
-                      Закрыть
+                      <span className="account-name">{account.name || "Без названия"}</span>
+                      <span className="account-balance">{formatMoney(account.balance)}</span>
+                      <span className={`badge ${account.status === "OPEN" ? "badge-open" : "badge-closed"}`}>
+                        {account.status}
+                      </span>
                     </button>
-                  )}
-                </li>
-              ))}
-            </ul>
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </article>
       </div>
@@ -407,26 +434,36 @@ export const MainPage = () => {
         </article>
 
         <article className="card">
-          <h2 className="card-title">История операций</h2>
+          <div className="history-header">
+            <h2 className="card-title">История операций</h2>
+            <Link
+              to={selectedAccountId ? `/history?accountId=${selectedAccountId}` : "/history"}
+              className={`button button-secondary${!selectedAccountId ? " button-disabled-link" : ""}`}
+            >
+              Вся история
+            </Link>
+          </div>
           {!selectedAccountId ? (
             <p className="muted">Выберите счет для просмотра истории.</p>
           ) : transactions.length === 0 ? (
             <p className="muted">Операций пока нет.</p>
           ) : (
-            <ul className="transaction-list">
-              {transactions.map((transaction) => (
-                <li key={transaction.id} className="transaction-item">
-                  <div>
-                    <p className="transaction-type">{transaction.type}</p>
-                    <p className="transaction-date">{formatDate(transaction.createdAt)}</p>
-                  </div>
-                  <p className={transaction.type === "INCOME" ? "amount-plus" : "amount-minus"}>
-                    {transaction.type === "INCOME" ? "+" : "-"}
-                    {formatMoney(transaction.amount)}
-                  </p>
-                </li>
-              ))}
-            </ul>
+            <div className="transaction-list-wrap">
+              <ul className="transaction-list">
+                {transactions.map((transaction) => (
+                  <li key={transaction.id} className="transaction-item">
+                    <div>
+                      <p className="transaction-type">{transaction.type}</p>
+                      <p className="transaction-date">{formatDate(transaction.createdAt)}</p>
+                    </div>
+                    <p className={transaction.type === "INCOME" ? "amount-plus" : "amount-minus"}>
+                      {transaction.type === "INCOME" ? "+" : "-"}
+                      {formatMoney(transaction.amount)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
         </article>
       </div>
