@@ -1,0 +1,29 @@
+.auth-loader-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  padding: 16px;
+}
+
+.auth-loader-card {
+  width: 100%;
+  max-width: 380px;
+  border-radius: 12px;
+  background-color: #ffffff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+  padding: 24px;
+  text-align: center;
+}
+
+.auth-loader-title {
+  margin: 0;
+  font-size: 22px;
+  color: #111827;
+}
+
+.auth-loader-text {
+  margin: 8px 0 0;
+  color: #6b7280;
+}
