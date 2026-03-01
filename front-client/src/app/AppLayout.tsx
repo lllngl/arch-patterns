@@ -31,6 +31,11 @@ export const AppLayout = () => {
                   Профиль
                 </NavLink>
               </li>
+              <li>
+                <NavLink to="/loans" className={({ isActive }) => `nav-link${isActive ? " nav-link-active" : ""}`}>
+                  Кредиты
+                </NavLink>
+              </li>
             </ul>
           </nav>
 

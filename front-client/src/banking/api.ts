@@ -3,6 +3,7 @@ import type {
   AccountDTO,
   AccountTransactionDTO,
   CreateLoanRequest,
+  LoanStatus,
   LoanResponse,
   Page,
   PageRequestParams,
@@ -77,12 +78,13 @@ export const bankingApi = {
     return apiRequest<Page<AccountTransactionDTO>>(`/api/v1/accounts/${accountId}/transactions${query}`);
   },
 
-  getMyLoans(params: PageRequestParams = {}) {
+  getMyLoans(params: PageRequestParams = {}, status?: LoanStatus) {
     const query = buildQuery({
       page: params.page ?? 0,
       size: params.size ?? 20,
       sortBy: params.sortBy ?? "createdAt",
       sortDir: params.sortDir ?? "DESC",
+      status,
     });
     return apiRequest<Page<LoanResponse>>(`/api/v1/loan/my${query}`);
   },
