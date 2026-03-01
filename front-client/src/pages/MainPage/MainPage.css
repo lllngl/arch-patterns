@@ -84,6 +84,122 @@
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
+.tariff-select {
+  position: relative;
+}
+
+.tariff-trigger {
+  text-align: left;
+  justify-content: flex-start;
+  color: #111827;
+  background-color: #ffffff;
+}
+
+.tariff-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.tariff-option {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  text-align: left;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.tariff-option:hover {
+  background-color: #f8fafc;
+}
+
+.tariff-option-active {
+  background-color: #eff6ff;
+}
+
+.tariff-option-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.tariff-dropdown-state {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.loan-select {
+  position: relative;
+}
+
+.loan-trigger {
+  text-align: left;
+  justify-content: flex-start;
+  color: #111827;
+  background-color: #ffffff;
+}
+
+.loan-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background-color: #ffffff;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 20;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.loan-option {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+  background: #ffffff;
+  text-align: left;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.loan-option:hover {
+  background-color: #f8fafc;
+}
+
+.loan-option-active {
+  background-color: #eff6ff;
+}
+
+.loan-option-meta {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.loan-dropdown-state {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
 .button {
   border: 1px solid transparent;
   border-radius: 8px;

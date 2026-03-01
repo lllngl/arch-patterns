@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent, type UIEvent } from "react";
 import { Link } from "react-router-dom";
 import { ApiError } from "../../auth/api";
 import { useAuth } from "../../auth/AuthContext";
@@ -44,8 +44,16 @@ export const MainPage = () => {
   const [loanAmount, setLoanAmount] = useState("");
   const [loanTermMonths, setLoanTermMonths] = useState("");
   const [loanTariffId, setLoanTariffId] = useState("");
+  const [isTariffPickerOpen, setIsTariffPickerOpen] = useState(false);
+  const [tariffPage, setTariffPage] = useState(0);
+  const [hasMoreTariffs, setHasMoreTariffs] = useState(true);
+  const [isTariffsLoading, setIsTariffsLoading] = useState(false);
   const [loanAccountId, setLoanAccountId] = useState("");
   const [repayLoanId, setRepayLoanId] = useState("");
+  const [isLoanPickerOpen, setIsLoanPickerOpen] = useState(false);
+  const [loanPage, setLoanPage] = useState(0);
+  const [hasMoreLoans, setHasMoreLoans] = useState(true);
+  const [isLoansLoading, setIsLoansLoading] = useState(false);
   const [repayAccountId, setRepayAccountId] = useState("");
   const [repayAmount, setRepayAmount] = useState("");
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
@@ -65,6 +73,14 @@ export const MainPage = () => {
   );
 
   const openAccounts = useMemo(() => accounts.filter((account) => account.status === "OPEN"), [accounts]);
+  const selectedTariff = useMemo(
+    () => tariffs.find((tariff) => tariff.id === loanTariffId) ?? null,
+    [tariffs, loanTariffId]
+  );
+  const selectedRepayLoan = useMemo(
+    () => activeLoans.find((loan) => loan.id === repayLoanId) ?? null,
+    [activeLoans, repayLoanId]
+  );
 
   const showError = (err: unknown, fallback: string) => {
     if (err instanceof ApiError) {
@@ -105,17 +121,70 @@ export const MainPage = () => {
     setTransactions(page.content);
   };
 
-  const loadLoans = async () => {
-    const page = await bankingApi.getMyLoans({ size: 20, sortBy: "createdAt", sortDir: "DESC" });
-    setLoans(page.content);
+  const loadLoansPage = async (pageIndex: number, append: boolean) => {
+    setIsLoansLoading(true);
+    try {
+      const page = await bankingApi.getMyLoans({ page: pageIndex, size: 20, sortBy: "createdAt", sortDir: "DESC" });
+      const loadedLoans = append ? [...loans, ...page.content] : page.content;
+      setLoans(loadedLoans);
+      setLoanPage(page.number);
+      setHasMoreLoans(page.number + 1 < page.totalPages);
+
+      const activeLoadedLoans = loadedLoans.filter((loan) => loan.status === "ACTIVE");
+      if (!activeLoadedLoans.some((loan) => loan.id === repayLoanId)) {
+        setRepayLoanId(activeLoadedLoans[0]?.id ?? "");
+      }
+    } finally {
+      setIsLoansLoading(false);
+    }
   };
 
-  const loadTariffs = async () => {
-    const page = await bankingApi.getTariffs();
-    setTariffs(page.content);
+  const loadInitialLoans = async () => {
+    await loadLoansPage(0, false);
+  };
 
-    if (!loanTariffId && page.content.length > 0) {
-      setLoanTariffId(page.content[0].id);
+  const loadMoreLoans = async () => {
+    if (isLoansLoading || !hasMoreLoans) {
+      return;
+    }
+    try {
+      await loadLoansPage(loanPage + 1, true);
+    } catch {
+      setError("Не удалось подгрузить дополнительные кредиты.");
+      setIsLoansLoading(false);
+    }
+  };
+
+  const loadTariffsPage = async (pageIndex: number, append: boolean) => {
+    setIsTariffsLoading(true);
+    try {
+      const page = await bankingApi.getTariffs({ page: pageIndex, size: 20, sortBy: "name", sortDir: "ASC" });
+
+      setTariffs((prev) => (append ? [...prev, ...page.content] : page.content));
+      setTariffPage(page.number);
+      setHasMoreTariffs(page.number + 1 < page.totalPages);
+
+      if (!loanTariffId && page.content.length > 0) {
+        setLoanTariffId(page.content[0].id);
+      }
+    } finally {
+      setIsTariffsLoading(false);
+    }
+  };
+
+  const loadInitialTariffs = async () => {
+    await loadTariffsPage(0, false);
+  };
+
+  const loadMoreTariffs = async () => {
+    if (isTariffsLoading || !hasMoreTariffs) {
+      return;
+    }
+    try {
+      await loadTariffsPage(tariffPage + 1, true);
+    } catch {
+      setError("Не удалось подгрузить дополнительные тарифы.");
+      setIsTariffsLoading(false);
     }
   };
 
@@ -129,7 +198,7 @@ export const MainPage = () => {
       setIsLoading(true);
 
       try {
-        await Promise.all([loadAccounts(user.id), loadLoans(), loadTariffs()]);
+        await Promise.all([loadAccounts(user.id), loadInitialLoans(), loadInitialTariffs()]);
       } catch (err) {
         showError(err, "Не удалось загрузить банковские данные.");
       } finally {
@@ -262,11 +331,27 @@ export const MainPage = () => {
       setLoanAmount("");
       setLoanTermMonths("");
       setSuccess("Заявка на кредит создана.");
-      await loadLoans();
+      await loadInitialLoans();
     } catch (err) {
       showError(err, "Не удалось оформить кредит.");
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleTariffDropdownScroll = (event: UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceToBottom < 32 && hasMoreTariffs && !isTariffsLoading) {
+      void loadMoreTariffs();
+    }
+  };
+
+  const handleLoanDropdownScroll = (event: UIEvent<HTMLDivElement>) => {
+    const container = event.currentTarget;
+    const distanceToBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    if (distanceToBottom < 32 && hasMoreLoans && !isLoansLoading) {
+      void loadMoreLoans();
     }
   };
 
@@ -292,7 +377,7 @@ export const MainPage = () => {
       });
       setRepayAmount("");
       setSuccess("Погашение кредита успешно выполнено.");
-      await Promise.all([loadLoans(), loadAccounts(user.id)]);
+      await Promise.all([loadInitialLoans(), loadAccounts(user.id)]);
       if (selectedAccountId) {
         await loadTransactions(selectedAccountId);
       }
@@ -486,19 +571,43 @@ export const MainPage = () => {
               ))}
             </select>
 
-            <select
-              className="field"
-              value={loanTariffId}
-              onChange={(event) => setLoanTariffId(event.target.value)}
-              disabled={isSubmitting}
-            >
-              <option value="">Выберите тариф</option>
-              {tariffs.map((tariff) => (
-                <option key={tariff.id} value={tariff.id}>
-                  {tariff.name} ({tariff.rate}%)
-                </option>
-              ))}
-            </select>
+            <div className="tariff-select">
+              <button
+                type="button"
+                className="field tariff-trigger"
+                onClick={() => setIsTariffPickerOpen((value) => !value)}
+                disabled={isSubmitting}
+              >
+                {selectedTariff ? `${selectedTariff.name} (${selectedTariff.rate}%)` : "Выберите тариф"}
+              </button>
+              {isTariffPickerOpen && (
+                <div className="tariff-dropdown" onScroll={handleTariffDropdownScroll}>
+                  {tariffs.map((tariff) => (
+                    <button
+                      key={tariff.id}
+                      type="button"
+                      className={`tariff-option${loanTariffId === tariff.id ? " tariff-option-active" : ""}`}
+                      onClick={() => {
+                        setLoanTariffId(tariff.id);
+                        setIsTariffPickerOpen(false);
+                      }}
+                    >
+                      <span>{tariff.name}</span>
+                      <span className="tariff-option-meta">
+                        {tariff.rate}% / {formatMoney(tariff.minAmount)} - {formatMoney(tariff.maxAmount)}
+                      </span>
+                    </button>
+                  ))}
+                  {isTariffsLoading && <p className="tariff-dropdown-state">Загрузка тарифов...</p>}
+                  {!isTariffsLoading && !hasMoreTariffs && tariffs.length > 0 && (
+                    <p className="tariff-dropdown-state">Все активные тарифы загружены</p>
+                  )}
+                  {!isTariffsLoading && tariffs.length === 0 && (
+                    <p className="tariff-dropdown-state">Активных тарифов не найдено</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             <input
               className="field"
@@ -525,19 +634,45 @@ export const MainPage = () => {
         <article className="card">
           <h2 className="card-title">Погасить кредит</h2>
           <form className="stack" onSubmit={handleRepayLoan}>
-            <select
-              className="field"
-              value={repayLoanId}
-              onChange={(event) => setRepayLoanId(event.target.value)}
-              disabled={isSubmitting}
-            >
-              <option value="">Выберите активный кредит</option>
-              {activeLoans.map((loan) => (
-                <option key={loan.id} value={loan.id}>
-                  {loan.id.slice(0, 8)}... / Остаток: {formatMoney(loan.remainingAmount)}
-                </option>
-              ))}
-            </select>
+            <div className="loan-select">
+              <button
+                type="button"
+                className="field loan-trigger"
+                onClick={() => setIsLoanPickerOpen((value) => !value)}
+                disabled={isSubmitting}
+              >
+                {selectedRepayLoan
+                  ? `${selectedRepayLoan.id.slice(0, 8)}... / Остаток: ${formatMoney(selectedRepayLoan.remainingAmount)}`
+                  : "Выберите активный кредит"}
+              </button>
+              {isLoanPickerOpen && (
+                <div className="loan-dropdown" onScroll={handleLoanDropdownScroll}>
+                  {activeLoans.map((loan) => (
+                    <button
+                      key={loan.id}
+                      type="button"
+                      className={`loan-option${repayLoanId === loan.id ? " loan-option-active" : ""}`}
+                      onClick={() => {
+                        setRepayLoanId(loan.id);
+                        setIsLoanPickerOpen(false);
+                      }}
+                    >
+                      <span>{loan.id.slice(0, 8)}...</span>
+                      <span className="loan-option-meta">
+                        Остаток: {formatMoney(loan.remainingAmount)} / Платеж: {formatMoney(loan.monthlyPayment)}
+                      </span>
+                    </button>
+                  ))}
+                  {isLoansLoading && <p className="loan-dropdown-state">Загрузка кредитов...</p>}
+                  {!isLoansLoading && !hasMoreLoans && activeLoans.length > 0 && (
+                    <p className="loan-dropdown-state">Все кредиты загружены</p>
+                  )}
+                  {!isLoansLoading && activeLoans.length === 0 && (
+                    <p className="loan-dropdown-state">Активных кредитов не найдено</p>
+                  )}
+                </div>
+              )}
+            </div>
 
             <select
               className="field"
