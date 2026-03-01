@@ -44,11 +44,6 @@ export default function ProfilePage() {
   const [gender, setGender] = useState<Gender>("MALE");
   const [birthDate, setBirthDate] = useState("");
 
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [changingPw, setChangingPw] = useState(false);
-
   if (!user) return null;
 
   function startEditing() {
@@ -70,7 +65,6 @@ export default function ProfilePage() {
         firstName,
         lastName,
         patronymic: patronymic || undefined,
-        email,
         phone: phone ? Number(phone) : undefined,
         gender,
         birthDate: birthDate || undefined,
@@ -84,32 +78,6 @@ export default function ProfilePage() {
       }
     } finally {
       setSaving(false);
-    }
-  }
-
-  async function handlePasswordChange(e: FormEvent) {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      toast.error("Пароли не совпадают");
-      return;
-    }
-    setChangingPw(true);
-    try {
-      await usersApi.changePassword({
-        currentPassword,
-        newPassword,
-        confirmationPassword: confirmPassword,
-      });
-      toast.success("Пароль успешно изменён");
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
-    } finally {
-      setChangingPw(false);
     }
   }
 
@@ -167,13 +135,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="ep-email">Email</Label>
-                  <Input
-                    id="ep-email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  <Input id="ep-email" type="email" value={email} disabled />
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="ep-phone">Телефон</Label>
@@ -257,52 +219,6 @@ export default function ProfilePage() {
               </span>
             </div>
           )}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Смена пароля</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handlePasswordChange} className="space-y-4 max-w-sm">
-            <div className="space-y-1.5">
-              <Label htmlFor="cur-pw">Текущий пароль</Label>
-              <Input
-                id="cur-pw"
-                type="password"
-                value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="new-pw">Новый пароль</Label>
-              <Input
-                id="new-pw"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="confirm-pw">Подтвердите пароль</Label>
-              <Input
-                id="confirm-pw"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                minLength={6}
-              />
-            </div>
-            <Button type="submit" disabled={changingPw}>
-              {changingPw && <Loader2 className="animate-spin" />}
-              Сменить пароль
-            </Button>
-          </form>
         </CardContent>
       </Card>
     </div>

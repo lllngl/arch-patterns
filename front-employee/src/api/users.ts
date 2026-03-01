@@ -3,7 +3,6 @@ import type {
   UserDTO,
   UserRegisterDTO,
   UserEditDTO,
-  ChangePasswordRequest,
   Page,
   PageRequestParams,
   RoleName,
@@ -54,9 +53,5 @@ export const usersApi = {
 
   revokeSessions(userId: string) {
     return api.post(`/api/v1/users/${userId}/revoke-sessions`);
-  },
-
-  changePassword(data: ChangePasswordRequest) {
-    return api.patch("/api/v1/users/change-password", data);
   },
 };
