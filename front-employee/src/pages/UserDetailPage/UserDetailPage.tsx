@@ -128,6 +128,8 @@ export default function UserDetailPage() {
       const { data } = await accountsApi.getUserAccounts(userId, {
         page: accountPage,
         size: PAGE_SIZE,
+        sortBy: "id",
+        sortDir: "ASC",
       });
       setAccounts(data);
     } catch {
