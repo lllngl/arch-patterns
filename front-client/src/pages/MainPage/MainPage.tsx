@@ -58,7 +58,7 @@ export const MainPage = () => {
   );
 
   const activeLoans = useMemo(
-    () => loans.filter((loan) => loan.status === "ACTIVE" || loan.status === "OVERDUE"),
+    () => loans.filter((loan) => loan.status === "ACTIVE"),
     [loans]
   );
 
