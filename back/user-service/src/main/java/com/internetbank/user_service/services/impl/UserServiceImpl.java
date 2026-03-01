@@ -96,7 +96,8 @@ public class UserServiceImpl implements UserService {
         User existingUser = userRepository.findById(userId)
                 .orElseThrow(() -> new NotFoundException("User not found with ID: " + userId));
 
-        if (userEditDTO.getEmail() != null && !existingUser.getEmail().equalsIgnoreCase(userEditDTO.getEmail())) {
+        boolean isChangeEmail = userEditDTO.getEmail() != null && !existingUser.getEmail().equalsIgnoreCase(userEditDTO.getEmail());
+        if (isChangeEmail) {
             userRepository.findByEmail(userEditDTO.getEmail())
                     .ifPresent(u -> {
                         if (!u.getId().equals(userId)) {
@@ -104,18 +105,10 @@ public class UserServiceImpl implements UserService {
                         }
                     });
         }
-        if (userEditDTO.getPhone() != null && !userEditDTO.getPhone().equals(existingUser.getPhone())) {
-            userRepository.findByPhone(userEditDTO.getPhone())
-                    .ifPresent(u -> {
-                        if (!u.getId().equals(userId)) {
-                            throw new DuplicateResourceException("Phone number '" + userEditDTO.getPhone() + "' is already in use by another user.");
-                        }
-                    });
-        }
 
         userMapper.updateUserFromDto(userEditDTO, existingUser);
         User updatedUser = userRepository.saveAndFlush(existingUser);
-        revokeAllUserSessionsByUserId(userId);
+        if (isChangeEmail) revokeAllUserSessionsByUserId(userId);
         return userMapper.userToUserDto(updatedUser);
     }
 
