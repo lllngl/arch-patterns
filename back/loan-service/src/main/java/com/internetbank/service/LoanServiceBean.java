@@ -92,7 +92,7 @@ public class LoanServiceBean implements LoanService {
                 .tariffId(request.tariffId())
                 .amount(request.amount())
                 .monthlyPayment(monthlyPayment)
-                .remainingAmount(request.amount())
+                .remainingAmount(monthlyPayment.multiply(BigDecimal.valueOf(request.termMonths())))
                 .nextPaymentDate(null)
                 .paymentDate(LocalDate.now())
                 .createdAt(LocalDate.now())
