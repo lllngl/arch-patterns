@@ -2,6 +2,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { AppLayout } from "./app/AppLayout";
 import { ProtectedRoute, PublicOnlyRoute } from "./auth/RouteGuards";
 import { ErrorPage } from "./pages/ErrorPage/ErrorPage";
+import { HistoryPage } from "./pages/HistoryPage/HistoryPage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { MainPage } from "./pages/MainPage/MainPage";
 import { ProfilePage } from "./pages/ProfilePage/ProfilePage";
@@ -20,6 +21,10 @@ export const router = createBrowserRouter([
           {
             path: "profile",
             element: <ProfilePage />,
+          },
+          {
+            path: "history",
+            element: <HistoryPage />,
           },
           {
             path: "error/:code",
