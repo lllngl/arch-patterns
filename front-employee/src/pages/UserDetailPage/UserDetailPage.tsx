@@ -24,11 +24,22 @@ import {
 } from "@/components/ui/table";
 import { usersApi } from "@/api/users";
 import { accountsApi } from "@/api/accounts";
-import type { UserDTO, AccountDTO, Page, Gender } from "@/types";
+import { loansApi } from "@/api/loans";
+import type { LoansFilterParams } from "@/api/loans";
+import type {
+  UserDTO,
+  AccountDTO,
+  LoanResponse,
+  LoanStatus,
+  Page,
+  Gender,
+} from "@/types";
 import { toast } from "sonner";
 import axios from "axios";
+import { localizeError } from "@/lib/error-messages";
 import {
   ArrowLeft,
+  Banknote,
   ChevronLeft,
   ChevronRight,
   KeyRound,
@@ -56,6 +67,25 @@ const STATUS_LABELS: Record<string, string> = {
   CLOSED: "Закрыт",
 };
 
+const LOAN_STATUS_LABELS: Record<LoanStatus, string> = {
+  PENDING: "Ожидает",
+  ACTIVE: "Активен",
+  PAID: "Погашен",
+  OVERDUE: "Просрочен",
+  REJECTED: "Отклонён",
+};
+
+const LOAN_STATUS_VARIANT: Record<
+  LoanStatus,
+  "secondary" | "outline" | "destructive" | "default"
+> = {
+  PENDING: "outline",
+  ACTIVE: "secondary",
+  PAID: "default",
+  OVERDUE: "destructive",
+  REJECTED: "destructive",
+};
+
 const PAGE_SIZE = 10;
 
 export default function UserDetailPage() {
@@ -63,9 +93,13 @@ export default function UserDetailPage() {
   const navigate = useNavigate();
   const [user, setUser] = useState<UserDTO | null>(null);
   const [accounts, setAccounts] = useState<Page<AccountDTO> | null>(null);
+  const [loans, setLoans] = useState<Page<LoanResponse> | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
+  const [loadingLoans, setLoadingLoans] = useState(true);
   const [accountPage, setAccountPage] = useState(0);
+  const [loanPage, setLoanPage] = useState(0);
+  const [loanStatusFilter, setLoanStatusFilter] = useState<string>("all");
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -94,6 +128,8 @@ export default function UserDetailPage() {
       const { data } = await accountsApi.getUserAccounts(userId, {
         page: accountPage,
         size: PAGE_SIZE,
+        sortBy: "id",
+        sortDir: "ASC",
       });
       setAccounts(data);
     } catch {
@@ -106,6 +142,31 @@ export default function UserDetailPage() {
   useEffect(() => {
     fetchAccounts();
   }, [fetchAccounts]);
+
+  const fetchLoans = useCallback(async () => {
+    if (!userId) return;
+    setLoadingLoans(true);
+    try {
+      const params: LoansFilterParams = {
+        page: loanPage,
+        size: PAGE_SIZE,
+        sortBy: "createdAt",
+        sortDir: "DESC",
+      };
+      if (loanStatusFilter !== "all")
+        params.status = loanStatusFilter as LoanStatus;
+      const { data } = await loansApi.getByUser(userId, params);
+      setLoans(data);
+    } catch {
+      //
+    } finally {
+      setLoadingLoans(false);
+    }
+  }, [userId, loanPage, loanStatusFilter]);
+
+  useEffect(() => {
+    fetchLoans();
+  }, [fetchLoans]);
 
   function startEditing() {
     if (!user) return;
@@ -138,7 +199,7 @@ export default function UserDetailPage() {
       toast.success("Данные обновлены");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Ошибка сохранения");
+        toast.error(localizeError(err.response?.data?.message));
       }
     } finally {
       setSaving(false);
@@ -159,7 +220,7 @@ export default function UserDetailPage() {
       setUser(data);
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Ошибка");
+        toast.error(localizeError(err.response?.data?.message));
       }
     }
   }
@@ -173,7 +234,7 @@ export default function UserDetailPage() {
       toast.success("Все сессии пользователя сброшены");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Ошибка");
+        toast.error(localizeError(err.response?.data?.message));
       }
     }
   }
@@ -187,7 +248,7 @@ export default function UserDetailPage() {
       navigate("/users");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Ошибка удаления");
+        toast.error(localizeError(err.response?.data?.message));
       }
     }
   }
@@ -464,6 +525,120 @@ export default function UserDetailPage() {
                     size="sm"
                     disabled={accounts.last}
                     onClick={() => setAccountPage((p) => p + 1)}
+                  >
+                    Вперёд <ChevronRight />
+                  </Button>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+      </div>
+
+      <div className="space-y-3">
+        <h2 className="text-lg font-semibold">Кредиты пользователя</h2>
+
+        <div className="flex items-center gap-3">
+          <Select
+            value={loanStatusFilter}
+            onValueChange={(v) => {
+              setLoanStatusFilter(v);
+              setLoanPage(0);
+            }}
+          >
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Статус" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Все</SelectItem>
+              <SelectItem value="PENDING">Ожидают</SelectItem>
+              <SelectItem value="ACTIVE">Активные</SelectItem>
+              <SelectItem value="PAID">Погашенные</SelectItem>
+              <SelectItem value="OVERDUE">Просроченные</SelectItem>
+              <SelectItem value="REJECTED">Отклонённые</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {loadingLoans ? (
+          <div className="border rounded-md p-4 space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-4 w-full" />
+            ))}
+          </div>
+        ) : !loans || loans.content.length === 0 ? (
+          <div className="border rounded-md flex flex-col items-center justify-center py-12 text-center">
+            <Banknote className="size-10 text-muted-foreground mb-3" />
+            <p className="text-muted-foreground font-medium">
+              У пользователя нет кредитов
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Тариф</TableHead>
+                    <TableHead>Сумма</TableHead>
+                    <TableHead>Остаток</TableHead>
+                    <TableHead>Срок</TableHead>
+                    <TableHead>Статус</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loans.content.map((loan) => (
+                    <TableRow
+                      key={loan.id}
+                      className="cursor-pointer"
+                      onClick={() => navigate(`/loans/${loan.id}`)}
+                    >
+                      <TableCell className="font-medium">
+                        {loan.tariff?.name ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        {Number(loan.amount).toLocaleString("ru-RU", {
+                          style: "currency",
+                          currency: "RUB",
+                        })}
+                      </TableCell>
+                      <TableCell>
+                        {Number(loan.remainingAmount).toLocaleString("ru-RU", {
+                          style: "currency",
+                          currency: "RUB",
+                        })}
+                      </TableCell>
+                      <TableCell>{loan.termMonths} мес.</TableCell>
+                      <TableCell>
+                        <Badge variant={LOAN_STATUS_VARIANT[loan.status]}>
+                          {LOAN_STATUS_LABELS[loan.status] ?? loan.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+
+            {loans.totalPages > 1 && (
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  Страница {loans.number + 1} из {loans.totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={loans.first}
+                    onClick={() => setLoanPage((p) => p - 1)}
+                  >
+                    <ChevronLeft /> Назад
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={loans.last}
+                    onClick={() => setLoanPage((p) => p + 1)}
                   >
                     Вперёд <ChevronRight />
                   </Button>

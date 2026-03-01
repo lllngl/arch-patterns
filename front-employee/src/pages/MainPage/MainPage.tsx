@@ -22,8 +22,13 @@ export default function MainPage() {
     async function fetchStats() {
       try {
         const [usersRes, accountsRes] = await Promise.all([
-          usersApi.getAll({ page: 0, size: 1 }),
-          accountsApi.getAll({ page: 0, size: 1 }),
+          usersApi.getAll({ page: 0, size: 1, sortBy: "id", sortDir: "ASC" }),
+          accountsApi.getAll({
+            page: 0,
+            size: 1,
+            sortBy: "id",
+            sortDir: "ASC",
+          }),
         ]);
         setStats({
           totalUsers: usersRes.data.totalElements,

@@ -14,7 +14,14 @@ import {
 
 import { AppBreadcrumbs } from "./AppBreadcrumbs";
 import { NavUser } from "@/components/custom/NavUser";
-import { HomeIcon, Users, Wallet, UserIcon } from "lucide-react";
+import {
+  HomeIcon,
+  Users,
+  Wallet,
+  UserIcon,
+  Percent,
+  Banknote,
+} from "lucide-react";
 import { Toaster } from "@/components/ui/sonner";
 
 const items = [
@@ -32,6 +39,16 @@ const items = [
     title: "Счета",
     url: "/accounts",
     icon: Wallet,
+  },
+  {
+    title: "Тарифы",
+    url: "/tariffs",
+    icon: Percent,
+  },
+  {
+    title: "Кредиты",
+    url: "/loans",
+    icon: Banknote,
   },
   {
     title: "Профиль",

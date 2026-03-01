@@ -17,6 +17,7 @@ import { usersApi } from "@/api/users";
 import { toast } from "sonner";
 import { Loader2, Pencil, X } from "lucide-react";
 import axios from "axios";
+import { localizeError } from "@/lib/error-messages";
 import type { Gender } from "@/types";
 
 const GENDER_LABELS: Record<string, string> = {
@@ -79,7 +80,7 @@ export default function ProfilePage() {
       toast.success("Профиль обновлён");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Ошибка сохранения");
+        toast.error(localizeError(err.response?.data?.message));
       }
     } finally {
       setSaving(false);
@@ -105,7 +106,7 @@ export default function ProfilePage() {
       setConfirmPassword("");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Ошибка смены пароля");
+        toast.error(localizeError(err.response?.data?.message));
       }
     } finally {
       setChangingPw(false);

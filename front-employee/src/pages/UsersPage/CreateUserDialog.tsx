@@ -21,6 +21,7 @@ import { usersApi } from "@/api/users";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
 import axios from "axios";
+import { localizeError } from "@/lib/error-messages";
 import type { Gender, RoleName } from "@/types";
 
 interface CreateUserDialogProps {
@@ -77,9 +78,7 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
       onCreated();
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(
-          err.response?.data?.message || "Ошибка создания пользователя"
-        );
+        toast.error(localizeError(err.response?.data?.message));
       }
     } finally {
       setLoading(false);
@@ -144,12 +143,13 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="cu-phone">Телефон</Label>
+              <Label htmlFor="cu-phone">Телефон *</Label>
               <Input
                 id="cu-phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                required
                 placeholder="79001234567"
               />
             </div>

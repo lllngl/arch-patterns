@@ -9,6 +9,9 @@ import UsersPage from "./pages/UsersPage/UsersPage";
 import UserDetailPage from "./pages/UserDetailPage/UserDetailPage";
 import AccountsPage from "./pages/AccountsPage/AccountsPage";
 import AccountDetailPage from "./pages/AccountDetailPage/AccountDetailPage";
+import TariffsPage from "./pages/TariffsPage/TariffsPage";
+import LoansPage from "./pages/LoansPage/LoansPage";
+import LoanDetailPage from "./pages/LoanDetailPage/LoanDetailPage";
 
 export type RouteHandle = {
   breadcrumb?: string | ((params: Record<string, string>) => string);
@@ -56,6 +59,26 @@ export const router = createBrowserRouter([
               {
                 path: ":accountId",
                 element: <AccountDetailPage />,
+                handle: { breadcrumb: "Детали" },
+              },
+            ],
+          },
+          {
+            path: "tariffs",
+            element: <TariffsPage />,
+            handle: { breadcrumb: "Тарифы" },
+          },
+          {
+            path: "loans",
+            handle: { breadcrumb: "Кредиты" },
+            children: [
+              {
+                index: true,
+                element: <LoansPage />,
+              },
+              {
+                path: ":loanId",
+                element: <LoanDetailPage />,
                 handle: { breadcrumb: "Детали" },
               },
             ],

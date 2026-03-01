@@ -31,6 +31,7 @@ import type {
 } from "@/types";
 import { toast } from "sonner";
 import axios from "axios";
+import { localizeError } from "@/lib/error-messages";
 import {
   ArrowDown,
   ArrowLeft,
@@ -110,7 +111,7 @@ export default function AccountDetailPage() {
       navigate("/accounts");
     } catch (err) {
       if (axios.isAxiosError(err)) {
-        toast.error(err.response?.data?.message || "Ошибка удаления счёта");
+        toast.error(localizeError(err.response?.data?.message));
       }
     }
   }
