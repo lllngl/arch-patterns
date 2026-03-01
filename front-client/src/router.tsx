@@ -4,6 +4,7 @@ import { ProtectedRoute, PublicOnlyRoute } from "./auth/RouteGuards";
 import { ErrorPage } from "./pages/ErrorPage/ErrorPage";
 import { HistoryPage } from "./pages/HistoryPage/HistoryPage";
 import { LoginPage } from "./pages/LoginPage/LoginPage";
+import { LoansPage } from "./pages/LoansPage/LoansPage";
 import { MainPage } from "./pages/MainPage/MainPage";
 import { ProfilePage } from "./pages/ProfilePage/ProfilePage";
 
@@ -25,6 +26,10 @@ export const router = createBrowserRouter([
           {
             path: "history",
             element: <HistoryPage />,
+          },
+          {
+            path: "loans",
+            element: <LoansPage />,
           },
           {
             path: "error/:code",
