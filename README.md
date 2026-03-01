@@ -1,1 +1,5 @@
-![db diagram](patterns.drawio.png)
+Диаграмма сущностей:
+![entity diagram](patterns.drawio.png)
+
+Диаграмма компонентов:
+![uml diagram](patterns-component-uml.drawio.png)
