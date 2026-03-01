@@ -143,12 +143,13 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="cu-phone">Телефон</Label>
+              <Label htmlFor="cu-phone">Телефон *</Label>
               <Input
                 id="cu-phone"
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value.replace(/\D/g, ""))}
+                required
                 placeholder="79001234567"
               />
             </div>
