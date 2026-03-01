@@ -67,12 +67,6 @@ export interface UserEditDTO {
   birthDate?: string;
 }
 
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-  confirmationPassword: string;
-}
-
 export interface PageRequestParams {
   page?: number;
   size?: number;

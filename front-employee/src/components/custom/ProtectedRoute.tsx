@@ -3,8 +3,9 @@ import { useAuthStore } from "@/stores/auth";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function ProtectedRoute() {
-  const isAuthenticated = useAuthStore((s) => !!s.user);
+  const user = useAuthStore((s) => s.user);
   const isLoading = useAuthStore((s) => s.isLoading);
+  const clearAuth = useAuthStore((s) => s.clearAuth);
 
   if (isLoading) {
     return (
@@ -17,7 +18,12 @@ export function ProtectedRoute() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (user.role !== "EMPLOYEE") {
+    clearAuth();
     return <Navigate to="/login" replace />;
   }
 

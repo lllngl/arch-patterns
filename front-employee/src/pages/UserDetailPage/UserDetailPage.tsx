@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useAuthStore } from "@/stores/auth";
 import { usersApi } from "@/api/users";
 import { accountsApi } from "@/api/accounts";
 import { loansApi } from "@/api/loans";
@@ -91,6 +92,7 @@ const PAGE_SIZE = 10;
 export default function UserDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const currentUser = useAuthStore((s) => s.user);
   const [user, setUser] = useState<UserDTO | null>(null);
   const [accounts, setAccounts] = useState<Page<AccountDTO> | null>(null);
   const [loans, setLoans] = useState<Page<LoanResponse> | null>(null);
@@ -295,9 +297,11 @@ export default function UserDetailPage() {
           {user.isBlocked ? <LockOpen /> : <Lock />}
           {user.isBlocked ? "Разблокировать" : "Заблокировать"}
         </Button>
-        <Button variant="outline" size="sm" onClick={handleRevokeSessions}>
-          <KeyRound /> Сбросить сессии
-        </Button>
+        {currentUser?.id !== user.id && (
+          <Button variant="outline" size="sm" onClick={handleRevokeSessions}>
+            <KeyRound /> Сбросить сессии
+          </Button>
+        )}
         <Button variant="destructive" size="sm" onClick={handleDelete}>
           <Trash2 /> Удалить
         </Button>

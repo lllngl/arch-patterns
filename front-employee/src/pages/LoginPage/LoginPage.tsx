@@ -24,7 +24,12 @@ export default function LoginPage() {
 
     try {
       await login(email, password);
-      navigate("/", { replace: true });
+      const user = useAuthStore.getState().user;
+      if (user?.role !== "EMPLOYEE") {
+        setError("У вас нет доступа к этой странице.");
+      } else {
+        navigate("/", { replace: true });
+      }
     } catch (err) {
       if (axios.isAxiosError(err)) {
         setError(localizeError(err.response?.data?.message));
