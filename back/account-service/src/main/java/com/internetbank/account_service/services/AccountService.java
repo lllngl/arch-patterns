@@ -5,6 +5,8 @@ import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.AccountTransactionDTO;
 import com.internetbank.account_service.dtos.MoneyOperationRequest;
 import com.internetbank.account_service.dtos.RenameAccountRequest;
+import com.internetbank.account_service.dtos.TransferRequest;
+import com.internetbank.account_service.dtos.TransferResponse;
 import com.internetbank.account_service.enums.AccountStatus;
 import com.internetbank.account_service.enums.TransactionType;
 import com.internetbank.common.security.AuthenticatedUser;
@@ -27,6 +29,8 @@ public interface AccountService {
     AccountDTO deposit(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user);
 
     AccountDTO withdraw(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user);
+
+    TransferResponse transfer(TransferRequest request, AuthenticatedUser user);
 
     AccountDTO rename(UUID accountId, RenameAccountRequest request, AuthenticatedUser user);
 

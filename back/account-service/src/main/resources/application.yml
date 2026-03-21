@@ -33,6 +33,19 @@ internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
 
+bank:
+  base-currency: RUB
+  supported-currencies:
+    - RUB
+    - USD
+    - EUR
+  master-account-user-id: 00000000-0000-0000-0000-000000000001
+  master-account-name: Bank master account
+  commission-percent: 0.00
+
+exchange-rate:
+  base-url: https://api.frankfurter.dev/v1
+
 logging:
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

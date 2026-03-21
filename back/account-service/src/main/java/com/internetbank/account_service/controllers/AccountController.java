@@ -6,6 +6,8 @@ import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.AccountTransactionDTO;
 import com.internetbank.account_service.dtos.MoneyOperationRequest;
 import com.internetbank.account_service.dtos.RenameAccountRequest;
+import com.internetbank.account_service.dtos.TransferRequest;
+import com.internetbank.account_service.dtos.TransferResponse;
 import com.internetbank.account_service.enums.AccountStatus;
 import com.internetbank.account_service.enums.TransactionType;
 import com.internetbank.account_service.services.AccountService;
@@ -101,6 +103,15 @@ public class AccountController {
             @RequestBody @Valid MoneyOperationRequest request,
             @AuthenticationPrincipal AuthenticatedUser user) {
         AccountDTO response = accountService.withdraw(accountId, request, user);
+        return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/transfers")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<TransferResponse> transfer(
+            @RequestBody @Valid TransferRequest request,
+            @AuthenticationPrincipal AuthenticatedUser user) {
+        TransferResponse response = accountService.transfer(request, user);
         return ResponseEntity.ok(response);
     }
 
