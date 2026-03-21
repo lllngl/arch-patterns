@@ -11,5 +11,5 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "exchange-rate")
 public class ExchangeRateProperties {
 
-    private String baseUrl = "https://api.frankfurter.dev/v1";
+    private String baseUrl = "https://open.er-api.com/v6/latest";
 }

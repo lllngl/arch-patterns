@@ -23,6 +23,21 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     date-format: yyyy-MM-dd HH:mm:ss
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.internetbank.account_service.messaging"
+        spring.json.value.default.type: com.internetbank.account_service.messaging.AccountOperationCommand
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
   security:
     oauth2:
       resourceserver:
@@ -44,7 +59,17 @@ bank:
   commission-percent: 0.00
 
 exchange-rate:
-  base-url: https://api.frankfurter.dev/v1
+  base-url: ${EXCHANGE_RATE_BASE_URL:https://open.er-api.com/v6/latest}
+
+app:
+  kafka:
+    topics:
+      account-operation-commands: account-operation-commands
+    command-await-timeout-ms: 10000
+    command-await-poll-interval-ms: 100
+  websocket:
+    endpoint: /ws
+    account-transactions-destination-prefix: /topic/accounts
 
 logging:
   pattern:

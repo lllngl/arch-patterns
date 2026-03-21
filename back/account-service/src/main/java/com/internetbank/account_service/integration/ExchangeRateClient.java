@@ -5,6 +5,8 @@ import com.internetbank.common.enums.CurrencyCode;
 import com.internetbank.common.exceptions.InternalServerErrorException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.math.BigDecimal;
 import java.util.Map;
@@ -25,14 +27,25 @@ public class ExchangeRateClient {
             return BigDecimal.ONE;
         }
 
-        ExchangeRateResponse response = restClient.get()
-                .uri(uriBuilder -> uriBuilder
-                        .path("/latest")
-                        .queryParam("base", baseCurrency.name())
-                        .queryParam("symbols", targetCurrency.name())
-                        .build())
-                .retrieve()
-                .body(ExchangeRateResponse.class);
+        ExchangeRateResponse response;
+        try {
+            response = restClient.get()
+                    .uri(uriBuilder -> uriBuilder
+                            .pathSegment(baseCurrency.name())
+                            .build())
+                    .retrieve()
+                    .body(ExchangeRateResponse.class);
+        } catch (RestClientResponseException exception) {
+            throw new InternalServerErrorException(
+                    "Exchange rate provider returned HTTP %s for %s/%s."
+                            .formatted(exception.getStatusCode().value(), baseCurrency, targetCurrency)
+            );
+        } catch (RestClientException exception) {
+            throw new InternalServerErrorException(
+                    "Failed to call exchange rate provider for %s/%s."
+                            .formatted(baseCurrency, targetCurrency)
+            );
+        }
 
         if (response == null || response.rates() == null || response.rates().get(targetCurrency.name()) == null) {
             throw new InternalServerErrorException(
@@ -43,8 +56,8 @@ public class ExchangeRateClient {
     }
 
     private record ExchangeRateResponse(
-            String base,
-            String date,
+            String result,
+            String base_code,
             Map<String, BigDecimal> rates
     ) {
     }
