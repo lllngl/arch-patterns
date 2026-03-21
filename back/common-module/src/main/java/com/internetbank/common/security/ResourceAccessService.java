@@ -1,6 +1,5 @@
 package com.internetbank.common.security;
 
-import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.enums.RoleName;
 import com.internetbank.common.exceptions.ForbiddenException;
 import com.internetbank.common.exceptions.NotFoundException;
@@ -16,7 +15,7 @@ import java.util.function.Function;
 public class ResourceAccessService {
     public <T> T getResourceAndCheckAuthorization(
             UUID resourceId,
-            UserDTO user,
+            AuthenticatedUser user,
             JpaRepository<T, UUID> repository,
             String resourceName,
             Function<T, UUID> userIdExtractor) {
@@ -27,15 +26,15 @@ public class ResourceAccessService {
 
         UUID resourceUserId = userIdExtractor.apply(resource);
 
-        if (resourceUserId == null || user == null || user.id() == null) {
+        if (resourceUserId == null || user == null || user.getId() == null) {
             log.error("Null user ID detected - resource: {}, current user: {}",
-                    resourceUserId, user == null ? null : user.id());
+                    resourceUserId, user == null ? null : user.getId());
             throw new ForbiddenException("Invalid user information detected. Please contact support.");
         }
 
-        boolean isEmployee = user.role() == RoleName.EMPLOYEE;
+        boolean isEmployee = user.hasRole(RoleName.EMPLOYEE);
 
-        if (!resourceUserId.equals(user.id()) && !isEmployee) {
+        if (!resourceUserId.equals(user.getId()) && !isEmployee) {
             throw new ForbiddenException(
                     String.format("You are not authorized to access this %s.",
                             resourceName.toLowerCase()));

@@ -23,14 +23,14 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/internetbank
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/internetbank}
 
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
 
 keycloak:
-  server-url: http://localhost:8080
+  server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
   realm: internetbank
   initial-temporary-password: ${KEYCLOAK_INITIAL_TEMPORARY_PASSWORD:string1}
   admin:

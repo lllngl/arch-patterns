@@ -19,6 +19,7 @@ import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.enums.RoleName;
 import com.internetbank.common.exceptions.BadRequestException;
 import com.internetbank.common.exceptions.NotFoundException;
+import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.common.security.ResourceAccessService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -49,8 +50,8 @@ public class AccountServiceImpl implements AccountService {
     @Transactional
     public AccountDTO createAccount(UUID userId, AccountCreateRequest request) {
         UserDTO targetUser = userAppClient.getUserById(userId);
-        if (targetUser.role() == RoleName.EMPLOYEE) {
-            throw new BadRequestException("Cannot create an account for employee.");
+        if (!targetUser.hasRole(RoleName.CLIENT)) {
+            throw new BadRequestException("Cannot create an account for a user without the CLIENT role.");
         }
 
         Account account = accountMapper.toEntity(request == null ? new AccountCreateRequest(null) : request);
@@ -64,7 +65,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public void closeAccount(UUID accountId, UserDTO user) {
+    public void closeAccount(UUID accountId, AuthenticatedUser user) {
         Account account = getAccountAndCheckAuthorization(accountId, user);
         if (account.getStatus() == AccountStatus.CLOSED) {
             throw new BadRequestException("Account is already closed.");
@@ -78,7 +79,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountDTO openAccount(UUID accountId, UserDTO user) {
+    public AccountDTO openAccount(UUID accountId, AuthenticatedUser user) {
         Account account = getAccountAndCheckAuthorization(accountId, user);
         if (account.getStatus() == AccountStatus.OPEN) {
             throw new BadRequestException("Account is already open.");
@@ -97,7 +98,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountDTO deposit(UUID accountId, MoneyOperationRequest request, UserDTO user) {
+    public AccountDTO deposit(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user) {
         Account account = getAccountAndCheckAuthorization(accountId, user);
         ensureAccountOpen(account);
         BigDecimal newBalance = account.getBalance().add(request.amount());
@@ -110,7 +111,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountDTO withdraw(UUID accountId, MoneyOperationRequest request, UserDTO user) {
+    public AccountDTO withdraw(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user) {
         Account account = getAccountAndCheckAuthorization(accountId, user);
         ensureAccountOpen(account);
 
@@ -128,7 +129,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional
-    public AccountDTO rename(UUID accountId, RenameAccountRequest request, UserDTO user) {
+    public AccountDTO rename(UUID accountId, RenameAccountRequest request, AuthenticatedUser user) {
         Account account = getAccountAndCheckAuthorization(accountId, user);
         ensureAccountOpen(account);
         account.setName(request.name().trim());
@@ -137,7 +138,7 @@ public class AccountServiceImpl implements AccountService {
 
     @Override
     @Transactional(readOnly = true)
-    public AccountDTO getAccountById(UUID accountId, UserDTO user) {
+    public AccountDTO getAccountById(UUID accountId, AuthenticatedUser user) {
         Account account = getAccountAndCheckAuthorization(accountId, user);
         return accountMapper.toDto(account);
     }
@@ -160,7 +161,7 @@ public class AccountServiceImpl implements AccountService {
     @Override
     @Transactional(readOnly = true)
     public Page<AccountTransactionDTO> getTransactions(UUID accountId,
-                                                       UserDTO user,
+                                                       AuthenticatedUser user,
                                                        Pageable pageable,
                                                        LocalDateTime fromDate,
                                                        LocalDateTime toDate,
@@ -172,7 +173,7 @@ public class AccountServiceImpl implements AccountService {
                 .map(accountTransactionMapper::toDto);
     }
 
-    private Account getAccountAndCheckAuthorization(UUID accountId, UserDTO user) {
+    private Account getAccountAndCheckAuthorization(UUID accountId, AuthenticatedUser user) {
         return resourceAccessService.getResourceAndCheckAuthorization(
                 accountId,
                 user,
