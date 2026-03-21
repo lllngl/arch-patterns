@@ -23,16 +23,15 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     date-format: yyyy-MM-dd HH:mm:ss
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/internetbank}
 
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
-
-jwt:
-  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
-  access-token-duration: PT2M    # 2 min
-  refresh-token-duration: P7D    # 7 days
-  refresh-token-replay-blacklist-duration: 15s
 
 logging:
   pattern:

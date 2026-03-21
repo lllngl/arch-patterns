@@ -21,11 +21,11 @@ spring:
     properties:
       hibernate:
         format_sql: true
-jwt:
-  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
-  access-token-duration: PT2M    # 2 минуты
-  refresh-token-duration: P7D    # 7 дней
-  refresh-token-replay-blacklist-duration: 15s
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/internetbank}
 
 internal:
   api:

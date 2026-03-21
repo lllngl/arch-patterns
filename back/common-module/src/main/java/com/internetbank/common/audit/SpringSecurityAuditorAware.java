@@ -1,7 +1,7 @@
 package com.internetbank.common.audit;
 
 
-import com.internetbank.common.dtos.UserDTO;
+import com.internetbank.common.security.AuthenticatedUser;
 import org.springframework.data.domain.AuditorAware;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,8 +19,8 @@ public class SpringSecurityAuditorAware implements AuditorAware<String> {
             return Optional.of("system");
         }
 
-        if (authentication.getPrincipal() instanceof UserDTO userDTO) {
-            return Optional.ofNullable(userDTO.email());
+        if (authentication.getPrincipal() instanceof AuthenticatedUser authenticatedUser) {
+            return Optional.ofNullable(authenticatedUser.getEmail());
         }
 
         if (authentication.getPrincipal() instanceof String principalString) {

@@ -2,6 +2,7 @@ package com.internetbank.controller;
 
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
+import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.db.model.enums.LoanStatus;
 import com.internetbank.dto.request.CreateLoanRequest;
 import com.internetbank.dto.request.RepayLoanRequest;
@@ -65,7 +66,7 @@ public class LoanController {
     @GetMapping("/{loanId}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<LoanResponse> getLoan(@PathVariable UUID loanId,
-                                                @AuthenticationPrincipal UserDTO user) {
+                                                @AuthenticationPrincipal AuthenticatedUser user) {
         LoanResponse response = loanService.getLoan(loanId, user);
         return ResponseEntity.ok(response);
     }
@@ -82,7 +83,7 @@ public class LoanController {
     @PreAuthorize("hasRole('CLIENT')")
     public ResponseEntity<Page<LoanResponse>> getLoansForClient(@ParameterObject PageRequestParams pageParams,
                                                                 @RequestParam(required = false) LoanStatus status,
-                                                                @AuthenticationPrincipal UserDTO user) {
-        return ResponseEntity.ok(loanService.getMyLoans(user.id(), pageParams, status, user));
+                                                                @AuthenticationPrincipal AuthenticatedUser user) {
+        return ResponseEntity.ok(loanService.getMyLoans(user.getId(), pageParams, status, user));
     }
 }

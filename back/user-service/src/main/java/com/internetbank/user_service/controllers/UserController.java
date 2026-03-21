@@ -1,10 +1,10 @@
 package com.internetbank.user_service.controllers;
 
-import com.internetbank.common.dtos.auth.ChangePasswordRequest;
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.common.enums.RoleName;
 import com.internetbank.common.parameters.PageableUtils;
+import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.user_service.dto.UserEditDTO;
 import com.internetbank.user_service.dto.UserRegisterDTO;
 import com.internetbank.user_service.enums.Gender;
@@ -17,10 +17,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.method.P;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
+import java.util.Set;
 import java.util.UUID;
 
 @RestController
@@ -34,17 +35,9 @@ public class UserController {
     @PostMapping("/create")
     @PreAuthorize("hasRole('EMPLOYEE')")
     public ResponseEntity<UserDTO> createUser(
-            @RequestParam("role") RoleName roleName,
+            @RequestParam("roles") Set<RoleName> roleNames,
             @Valid @RequestBody UserRegisterDTO request) {
-        return ResponseEntity.status(201).body(userService.createUserByEmployee(request, roleName));
-    }
-
-    @PatchMapping("/change-password")
-    public ResponseEntity<?> changePassword(
-            @RequestBody ChangePasswordRequest request,
-            Principal connectedUser) {
-        userService.changePassword(request, connectedUser);
-        return ResponseEntity.ok().build();
+        return ResponseEntity.status(201).body(userService.createUserByEmployee(request, roleNames));
     }
 
     @GetMapping("/{userId}")
@@ -56,7 +49,7 @@ public class UserController {
 
     @GetMapping("/profile")
     public ResponseEntity<UserDTO> getMyProfile(
-            Principal connectedUser) {
+            @AuthenticationPrincipal AuthenticatedUser connectedUser) {
         return ResponseEntity.ok(userService.getMyProfile(connectedUser));
     }
 
@@ -76,14 +69,21 @@ public class UserController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping("/{userId}/revoke-sessions")
-    @PreAuthorize("hasRole('EMPLOYEE') or #userId == principal.id")
-    public ResponseEntity<?> revokeAllUserSessions(
-            @PathVariable("userId") @P("userId") UUID userId) {
-        userService.revokeAllUserSessionsByUserId(userId);
-        return ResponseEntity.ok().build();
+    @PostMapping("/{userId}/roles/{roleName}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<UserDTO> addRoleToUser(
+            @PathVariable("userId") UUID userId,
+            @PathVariable("roleName") RoleName roleName) {
+        return ResponseEntity.ok(userService.addRoleToUser(userId, roleName));
     }
 
+    @DeleteMapping("/{userId}/roles/{roleName}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<UserDTO> removeRoleFromUser(
+            @PathVariable("userId") UUID userId,
+            @PathVariable("roleName") RoleName roleName) {
+        return ResponseEntity.ok(userService.removeRoleFromUser(userId, roleName));
+    }
 
     @GetMapping
     @PreAuthorize("hasRole('EMPLOYEE')")

@@ -12,6 +12,7 @@ import com.internetbank.account_service.services.AccountService;
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.common.parameters.PageableUtils;
+import com.internetbank.common.security.AuthenticatedUser;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,7 +62,7 @@ public class AccountController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Void> closeAccountStatus(
             @PathVariable("accountId") UUID accountId,
-            @AuthenticationPrincipal UserDTO user) {
+            @AuthenticationPrincipal AuthenticatedUser user) {
         accountService.closeAccount(accountId, user);
         return ResponseEntity.ok().build();
     }
@@ -70,7 +71,7 @@ public class AccountController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AccountDTO> openAccountStatus(
             @PathVariable("accountId") UUID accountId,
-            @AuthenticationPrincipal UserDTO user) {
+            @AuthenticationPrincipal AuthenticatedUser user) {
         AccountDTO response = accountService.openAccount(accountId, user);
         return ResponseEntity.ok(response);
     }
@@ -88,7 +89,7 @@ public class AccountController {
     public ResponseEntity<AccountDTO> deposit(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
-            @AuthenticationPrincipal UserDTO user) {
+            @AuthenticationPrincipal AuthenticatedUser user) {
         AccountDTO response = accountService.deposit(accountId, request, user);
         return ResponseEntity.ok(response);
     }
@@ -98,7 +99,7 @@ public class AccountController {
     public ResponseEntity<AccountDTO> withdraw(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
-            @AuthenticationPrincipal UserDTO user) {
+            @AuthenticationPrincipal AuthenticatedUser user) {
         AccountDTO response = accountService.withdraw(accountId, request, user);
         return ResponseEntity.ok(response);
     }
@@ -108,7 +109,7 @@ public class AccountController {
     public ResponseEntity<AccountDTO> rename(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid RenameAccountRequest request,
-            @AuthenticationPrincipal UserDTO user) {
+            @AuthenticationPrincipal AuthenticatedUser user) {
         AccountDTO response = accountService.rename(accountId, request, user);
         return ResponseEntity.ok(response);
     }
@@ -117,7 +118,7 @@ public class AccountController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Page<AccountTransactionDTO>> getTransactions(
             @PathVariable("accountId") UUID accountId,
-            @AuthenticationPrincipal UserDTO user,
+            @AuthenticationPrincipal AuthenticatedUser user,
             @ParameterObject PageRequestParams pageRequestParams,
             @RequestParam(name = "fromDate", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fromDate,
@@ -148,7 +149,7 @@ public class AccountController {
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<AccountDTO> getAccountById(
             @PathVariable("accountId") UUID accountId,
-            @AuthenticationPrincipal UserDTO user) {
+            @AuthenticationPrincipal AuthenticatedUser user) {
         AccountDTO response = accountService.getAccountById(accountId, user);
         return ResponseEntity.ok(response);
     }
@@ -160,7 +161,7 @@ public class AccountController {
             @RequestParam("userId") UUID userId) {
 
         UserDTO user = userAppClient.getUserById(userId);
-        AccountDTO response = accountService.getAccountById(accountId, user);
+        AccountDTO response = accountService.getAccountById(accountId, toAuthenticatedUser(user));
         return ResponseEntity.ok(response);
     }
 
@@ -183,7 +184,7 @@ public class AccountController {
             @RequestBody @Valid MoneyOperationRequest request,
             @RequestParam("userId") UUID userId) {
         UserDTO user = userAppClient.getUserById(userId);
-        AccountDTO response = accountService.deposit(accountId, request, user);
+        AccountDTO response = accountService.deposit(accountId, request, toAuthenticatedUser(user));
         return ResponseEntity.ok(response);
     }
 
@@ -194,8 +195,12 @@ public class AccountController {
             @RequestBody @Valid MoneyOperationRequest request,
             @RequestParam("userId") UUID userId) {
         UserDTO user = userAppClient.getUserById(userId);
-        AccountDTO response = accountService.withdraw(accountId, request, user);
+        AccountDTO response = accountService.withdraw(accountId, request, toAuthenticatedUser(user));
         return ResponseEntity.ok(response);
+    }
+
+    private AuthenticatedUser toAuthenticatedUser(UserDTO user) {
+        return AuthenticatedUser.external(user.id(), user.keycloakUserId(), user.email(), user.roles());
     }
 }
 

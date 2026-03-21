@@ -32,6 +32,27 @@ docker compose up -d
 
 Kafka UI: `http://localhost:8080`
 
+### Keycloak для SSO
+
+Из каталога `back`:
+
+```bash
+docker compose up -d keycloak
+```
+
+Порт Keycloak:
+
+- `8081`
+
+После запуска:
+
+- Admin Console: `http://localhost:8081`
+- realm: `internetbank`
+
+Подробная инструкция по clients, service account roles, синхронизации пользователей и проверке ролей:
+
+- `keycloak/README.md`
+
 ### PostgreSQL для каждого сервиса (compose внутри микросервисов)
 
 `user-service`:
@@ -60,6 +81,8 @@ docker compose -f account-service/docker-compose.yml up -d
 
 ## 3) Запустить сервисы
 
+Перед запуском `user-service` убедитесь, что Keycloak уже поднят и у клиента `user-service-admin` настроены service account permissions из `keycloak/README.md`.
+
 Из корня проекта, в отдельных терминалах (используйте `.\gradlew.bat` на Windows, `./gradlew` на Linux/macOS):
 
 ```bash
@@ -79,6 +102,8 @@ docker compose -f account-service/docker-compose.yml up -d
 - User Service: `http://localhost:9000/swagger-ui/index.html`
 - Account Service: `http://localhost:9005/swagger-ui/index.html`
 - Loan Service: `http://localhost:9001/swagger-ui/index.html`
+
+Для локальной авторизации без фронта используйте клиент `swagger-dev` в Keycloak. Пример получения `access_token` описан в `keycloak/README.md`.
 
 OpenAPI JSON:
 

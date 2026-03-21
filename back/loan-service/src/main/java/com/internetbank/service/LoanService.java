@@ -2,6 +2,7 @@ package com.internetbank.service;
 
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
+import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.db.model.enums.LoanStatus;
 import com.internetbank.dto.request.CreateLoanRequest;
 import com.internetbank.dto.request.RepayLoanRequest;
@@ -16,13 +17,13 @@ public interface LoanService {
 
     LoanResponse repayLoan(UUID accountLoanId, RepayLoanRequest request);
 
-    LoanResponse getLoan(UUID loanId, UserDTO user);
+    LoanResponse getLoan(UUID loanId, AuthenticatedUser user);
 
     Page<LoanResponse> getAllLoans(PageRequestParams pageParams, LoanStatus status);
 
     Page<LoanResponse> getLoansByUser(UUID userId, PageRequestParams pageParams, LoanStatus status);
 
-    Page<LoanResponse> getMyLoans(UUID userId, PageRequestParams pageParams, LoanStatus status, UserDTO user);
+    Page<LoanResponse> getMyLoans(UUID userId, PageRequestParams pageParams, LoanStatus status, AuthenticatedUser user);
 
     void rejectLoan(UUID loanId);
 

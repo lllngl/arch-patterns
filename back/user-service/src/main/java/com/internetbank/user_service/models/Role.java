@@ -28,7 +28,7 @@ public class Role extends Auditable {
     @Size(max=20, message = "Role name cannot exceed 20 characters.")
     private RoleName rolename;
 
-    @OneToMany(mappedBy = "role")
+    @ManyToMany(mappedBy = "roles")
     private Set<User> users = new HashSet<>();
 
 }
