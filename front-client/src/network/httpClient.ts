@@ -15,9 +15,6 @@ export interface RequestJsonOptions extends Omit<RequestInit, "body"> {
   parse?: (raw: unknown) => unknown;
 }
 
-/**
- * Сетевой слой: fetch, заголовки, 401 refresh. Не знает о бизнес-логике и UI.
- */
 export class HttpClient {
   private refreshPromise: Promise<string | null> | null = null;
 
@@ -70,7 +67,12 @@ export class HttpClient {
       return null as T;
     }
 
-    const raw: unknown = await response.json();
+    const rawText = await response.text();
+    if (!rawText.trim()) {
+      return null as T;
+    }
+
+    const raw: unknown = JSON.parse(rawText);
     if (parse) {
       return parse(raw) as T;
     }
@@ -97,8 +99,6 @@ async function parseErrorMessage(response: Response): Promise<string> {
         return rec.error;
       }
     }
-  } catch {
-    //
-  }
+  } catch {}
   return `Request failed with status ${response.status}`;
 }

@@ -1,11 +1,17 @@
 export type SortOption = "ASC" | "DESC";
 export type AccountStatus = "OPEN" | "CLOSED";
-export type TransactionType = "INCOME" | "EXPENSE";
 export type LoanStatus = "PENDING" | "ACTIVE" | "PAID" | "OVERDUE" | "REJECTED";
 export type PaymentType = "ANNUITY";
 
-/** ISO 4217 — заглушка расширения до мультивалютности (бэк может ещё не поддерживать). */
 export type CurrencyCode = "RUB" | "USD" | "EUR";
+
+export type LedgerTransactionType =
+  | "INCOME"
+  | "EXPENSE"
+  | "TRANSFER_IN"
+  | "TRANSFER_OUT"
+  | "MASTER_IN"
+  | "MASTER_OUT";
 
 export interface PageRequestParams {
   page?: number;
@@ -30,19 +36,27 @@ export interface AccountDTO {
   userId: string;
   name: string | null;
   balance: number;
+  currency: CurrencyCode;
   status: AccountStatus;
+  type: string;
   createdAt: string;
   modifiedAt: string;
-  /** Заглушка: валюта счёта (если бэк не отдаёт — клиент подставляет RUB). */
-  currency?: CurrencyCode;
 }
 
 export interface AccountTransactionDTO {
   id: string;
   accountId: string;
   amount: number;
-  type: TransactionType;
+  operationAmount: number | null;
+  type: LedgerTransactionType | string;
   description: string | null;
+  operationCurrency: CurrencyCode | null;
+  accountCurrency: CurrencyCode | null;
+  bankCurrency: CurrencyCode | null;
+  exchangeRate: number | null;
+  commissionAmount: number | null;
+  commissionCurrency: CurrencyCode | null;
+  relatedAccountId: string | null;
   createdAt: string;
 }
 
@@ -88,19 +102,21 @@ export interface RepayLoanRequest {
   amount: number;
 }
 
-/** Перевод между счетами (в т.ч. чужой счёт). Заглушка контракта. */
+export interface MoneyOperationRequest {
+  amount: number;
+  operationCurrency?: CurrencyCode | null;
+}
+
 export interface TransferRequest {
   fromAccountId: string;
   toAccountId: string;
   amount: number;
-  /** Если валюты различаются — конвертация по курсу (бэк). */
-  targetCurrency?: CurrencyCode;
+  operationCurrency?: CurrencyCode | null;
 }
 
-export interface TransferResult {
-  fromAccountId: string;
-  toAccountId: string;
-  amount: number;
-  convertedAmount?: number;
-  appliedRate?: number;
+export interface OperationAcceptedResponse {
+  operationRequestId: string;
+  status: string;
+  message: string;
+  submittedAt: string;
 }

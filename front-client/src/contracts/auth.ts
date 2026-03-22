@@ -18,7 +18,7 @@ export interface UserProfile {
   email: string;
   phone: number | null;
   gender: string | null;
-  role: UserRole;
+  roles: UserRole[];
   isBlocked: boolean;
   birthDate: string | null;
 }

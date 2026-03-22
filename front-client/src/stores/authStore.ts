@@ -1,9 +1,10 @@
 import { create } from "zustand";
 import type { UserProfile } from "../contracts/auth";
-import { completeOAuthLoginFromCallback, type OAuthCallbackParams } from "../use-cases/auth/oauthLoginUseCase";
+import type { OAuthCallbackParams } from "../use-cases/auth/oauthLoginUseCase";
+import { completeOAuthLoginFromCallbackDeduped } from "../use-cases/auth/oauthCallbackDedup";
 import { logoutUser } from "../use-cases/auth/logoutUseCase";
 import { restoreSessionIfPossible } from "../use-cases/auth/sessionUseCase";
-import { loginWithPasswordForDev } from "../use-cases/auth/legacyLoginUseCase";
+import { clearOAuthCallbackCache } from "../use-cases/auth/oauthCallbackDedup";
 
 interface AuthStoreState {
   user: UserProfile | null;
@@ -13,8 +14,6 @@ interface AuthStoreState {
   setUser: (user: UserProfile | null) => void;
   completeOAuthFromCallback: (params: OAuthCallbackParams) => Promise<UserProfile>;
   logout: () => Promise<void>;
-  /** Только при VITE_ENABLE_LEGACY_PASSWORD_LOGIN */
-  loginWithLegacyPassword: (login: string, password: string) => Promise<UserProfile>;
 }
 
 export const useAuthStore = create<AuthStoreState>((set) => ({
@@ -39,19 +38,14 @@ export const useAuthStore = create<AuthStoreState>((set) => ({
   },
 
   completeOAuthFromCallback: async (params) => {
-    const profile = await completeOAuthLoginFromCallback(params);
+    const profile = await completeOAuthLoginFromCallbackDeduped(params);
     set({ user: profile });
     return profile;
   },
 
   logout: async () => {
+    clearOAuthCallbackCache();
     await logoutUser();
     set({ user: null });
-  },
-
-  loginWithLegacyPassword: async (login, password) => {
-    const profile = await loginWithPasswordForDev(login, password);
-    set({ user: profile });
-    return profile;
   },
 }));

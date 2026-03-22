@@ -4,17 +4,18 @@ import type {
   CreateLoanRequest,
   LoanResponse,
   LoanStatus,
+  MoneyOperationRequest,
+  OperationAcceptedResponse,
   Page,
   PageRequestParams,
   RepayLoanRequest,
   TariffResponse,
-  TransactionType,
   TransferRequest,
-  TransferResult,
 } from "../contracts/banking";
 import {
   accountDtoSchema,
   loanResponseSchema,
+  operationAcceptedResponseSchema,
   pageAccountSchema,
   pageLoanSchema,
   pageTariffSchema,
@@ -34,7 +35,7 @@ function buildQuery(params: Record<string, string | number | boolean | undefined
 }
 
 interface TransactionsParams extends PageRequestParams {
-  type?: TransactionType;
+  type?: string;
 }
 
 export const bankingApi = {
@@ -64,19 +65,19 @@ export const bankingApi = {
     });
   },
 
-  deposit(accountId: string, amount: number): Promise<AccountDTO> {
-    return httpClient.requestJson<AccountDTO>(`/api/v1/accounts/${accountId}/deposit`, {
+  deposit(accountId: string, body: MoneyOperationRequest): Promise<OperationAcceptedResponse> {
+    return httpClient.requestJson<OperationAcceptedResponse>(`/api/v1/accounts/${accountId}/deposit`, {
       method: "PATCH",
-      body: { amount },
-      parse: (raw) => accountDtoSchema.parse(raw),
+      body,
+      parse: (raw) => operationAcceptedResponseSchema.parse(raw),
     });
   },
 
-  withdraw(accountId: string, amount: number): Promise<AccountDTO> {
-    return httpClient.requestJson<AccountDTO>(`/api/v1/accounts/${accountId}/withdraw`, {
+  withdraw(accountId: string, body: MoneyOperationRequest): Promise<OperationAcceptedResponse> {
+    return httpClient.requestJson<OperationAcceptedResponse>(`/api/v1/accounts/${accountId}/withdraw`, {
       method: "PATCH",
-      body: { amount },
-      parse: (raw) => accountDtoSchema.parse(raw),
+      body,
+      parse: (raw) => operationAcceptedResponseSchema.parse(raw),
     });
   },
 
@@ -135,17 +136,11 @@ export const bankingApi = {
     });
   },
 
-  /**
-   * Перевод между счетами (заглушка до появления эндпоинта на бэке).
-   */
-  transfer: async (_payload: TransferRequest): Promise<TransferResult> => {
-    const endpoint = import.meta.env.VITE_TRANSFER_ENDPOINT as string | undefined;
-    if (!endpoint) {
-      return Promise.reject(new Error("Переводы: эндпоинт не настроен (VITE_TRANSFER_ENDPOINT)."));
-    }
-    return httpClient.requestJson<TransferResult>(endpoint, {
+  transfer(payload: TransferRequest): Promise<OperationAcceptedResponse> {
+    return httpClient.requestJson<OperationAcceptedResponse>("/api/v1/accounts/transfers", {
       method: "POST",
-      body: _payload,
+      body: payload,
+      parse: (raw) => operationAcceptedResponseSchema.parse(raw),
     });
   },
 };

@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const currencyCode = z.enum(["RUB", "USD", "EUR"]);
+
 export const tariffResponseSchema = z.object({
   id: z.string(),
   name: z.string(),
@@ -16,19 +18,35 @@ export const accountDtoSchema = z.object({
   userId: z.string(),
   name: z.string().nullable(),
   balance: z.number(),
+  currency: currencyCode,
   status: z.enum(["OPEN", "CLOSED"]),
+  type: z.string(),
   createdAt: z.string(),
   modifiedAt: z.string(),
-  currency: z.enum(["RUB", "USD", "EUR"]).optional(),
 });
 
 export const accountTransactionDtoSchema = z.object({
   id: z.string(),
   accountId: z.string(),
   amount: z.number(),
-  type: z.enum(["INCOME", "EXPENSE"]),
+  operationAmount: z.number().nullable(),
+  type: z.string(),
   description: z.string().nullable(),
+  operationCurrency: currencyCode.nullable(),
+  accountCurrency: currencyCode.nullable(),
+  bankCurrency: currencyCode.nullable(),
+  exchangeRate: z.number().nullable(),
+  commissionAmount: z.number().nullable(),
+  commissionCurrency: currencyCode.nullable(),
+  relatedAccountId: z.string().nullable(),
   createdAt: z.string(),
+});
+
+export const operationAcceptedResponseSchema = z.object({
+  operationRequestId: z.string(),
+  status: z.string(),
+  message: z.string(),
+  submittedAt: z.string(),
 });
 
 export const loanResponseSchema = z.object({

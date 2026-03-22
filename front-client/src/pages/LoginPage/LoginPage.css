@@ -13,19 +13,6 @@
   font-size: 0.75rem;
 }
 
-.login-form-legacy {
-  margin-top: 1rem;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1rem;
-}
-
-.login-legacy-title {
-  font-size: 0.9rem;
-  color: #b45309;
-  margin: 0 0 0.75rem;
-}
-
-/* ===== Layout ===== */
 .login-page {
   height: 100vh;
   box-sizing: border-box;
@@ -45,7 +32,6 @@
   gap: 1.5rem;
 }
 
-/* ===== Card ===== */
 .login-card {
   background: #ffffff;
   border-radius: 16px;
@@ -65,7 +51,6 @@
   }
 }
 
-/* ===== Header ===== */
 .login-header {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -84,7 +69,6 @@
   margin: 0;
 }
 
-/* ===== Form ===== */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -129,7 +113,6 @@
   color: #9ca3af;
 }
 
-/* ===== Error ===== */
 .form-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -140,7 +123,6 @@
   text-align: center;
 }
 
-/* ===== Actions & Links ===== */
 .form-actions {
   text-align: right;
 }
@@ -160,7 +142,6 @@
   text-decoration: underline;
 }
 
-/* ===== Button ===== */
 .btn {
   padding: 0.85rem 1.5rem;
   border: none;
@@ -197,7 +178,6 @@
   width: 100%;
 }
 
-/* ===== Footer ===== */
 .login-footer {
   text-align: center;
 }
@@ -208,7 +188,6 @@
   margin: 0;
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 480px) {
   .login-card {
     padding: 1.5rem;

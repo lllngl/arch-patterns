@@ -11,9 +11,6 @@ interface State {
   error: AppError | null;
 }
 
-/**
- * Граница ошибок React: ловит необработанные исключения в поддереве.
- */
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);

@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
+import type { CurrencyCode } from "../../contracts/banking";
 import { useAccountsStore } from "../../stores/accountsStore";
 import { useAppSettingsStore } from "../../stores/appSettingsStore";
+import { formatMoney, isCreditLedgerType } from "../../utils/money";
 import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
 import "../../ui/StatusBanner/StatusBanner.css";
 import "./MainPage.css";
 
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(value);
-}
+const CURRENCIES: CurrencyCode[] = ["RUB", "USD", "EUR"];
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -61,11 +61,18 @@ export const MainPage = () => {
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
   const [transferToId, setTransferToId] = useState("");
   const [transferAmount, setTransferAmount] = useState("");
+  const [transferCurrency, setTransferCurrency] = useState<CurrencyCode>("RUB");
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? null,
     [accounts, selectedAccountId]
   );
+
+  useEffect(() => {
+    if (selectedAccount) {
+      setTransferCurrency(selectedAccount.currency);
+    }
+  }, [selectedAccount?.id, selectedAccount?.currency]);
 
   useEffect(() => {
     if (!user?.id) {
@@ -105,7 +112,7 @@ export const MainPage = () => {
   };
 
   const handleMoneyOperation = async (kind: "deposit" | "withdraw") => {
-    if (!user?.id || !selectedAccountId) {
+    if (!user?.id || !selectedAccountId || !selectedAccount) {
       return;
     }
     const amount = parsePositiveNumber(moneyAmount);
@@ -113,10 +120,11 @@ export const MainPage = () => {
       return;
     }
     clearError();
+    const opCur = selectedAccount.currency;
     if (kind === "deposit") {
-      await deposit(user.id, selectedAccountId, amount);
+      await deposit(user.id, selectedAccountId, amount, opCur);
     } else {
-      await withdraw(user.id, selectedAccountId, amount);
+      await withdraw(user.id, selectedAccountId, amount, opCur);
     }
   };
 
@@ -135,6 +143,7 @@ export const MainPage = () => {
       fromAccountId: selectedAccountId,
       toAccountId: toId,
       amount,
+      operationCurrency: transferCurrency,
     });
     setTransferAmount("");
   };
@@ -172,7 +181,7 @@ export const MainPage = () => {
             <div className="stack">
               <div className="current-account-card">
                 <p className="current-account-name">{selectedAccount.name || "Без названия"}</p>
-                <p className="current-account-balance">{formatMoney(selectedAccount.balance)}</p>
+                <p className="current-account-balance">{formatMoney(selectedAccount.balance, selectedAccount.currency)}</p>
                 <span className={`badge ${selectedAccount.status === "OPEN" ? "badge-open" : "badge-closed"}`}>
                   {selectedAccount.status}
                 </span>
@@ -221,7 +230,7 @@ export const MainPage = () => {
                         {account.name || "Без названия"}
                         {hiddenAccountIds.includes(account.id) ? " · скрыт" : ""}
                       </span>
-                      <span className="account-balance">{formatMoney(account.balance)}</span>
+                      <span className="account-balance">{formatMoney(account.balance, account.currency)}</span>
                       <span className={`badge ${account.status === "OPEN" ? "badge-open" : "badge-closed"}`}>
                         {account.status}
                       </span>
@@ -243,7 +252,7 @@ export const MainPage = () => {
             <div className="stack">
               <div className="selected-account">
                 <strong>{selectedAccount.name || "Без названия"}</strong>
-                <span>{formatMoney(selectedAccount.balance)}</span>
+                <span>{formatMoney(selectedAccount.balance, selectedAccount.currency)}</span>
               </div>
               <div className="inline-form">
                 <input
@@ -272,10 +281,7 @@ export const MainPage = () => {
               </div>
 
               <h3 className="card-subtitle">Перевод на другой счёт</h3>
-              <p className="muted small-print">
-                Укажите UUID счёта получателя (свой или чужой). Требуется эндпоинт на бэке и{" "}
-                <code>VITE_TRANSFER_ENDPOINT</code>.
-              </p>
+              <p className="muted small-print">UUID счёта получателя. При разных валютах конвертация по курсу на стороне банка.</p>
               <form className="stack" onSubmit={(e) => void handleTransfer(e)}>
                 <div className="inline-form">
                   <input
@@ -292,6 +298,19 @@ export const MainPage = () => {
                     placeholder="Сумма"
                     disabled={isSubmitting || selectedAccount.status !== "OPEN"}
                   />
+                  <select
+                    className="field"
+                    value={transferCurrency}
+                    onChange={(e) => setTransferCurrency(e.target.value as CurrencyCode)}
+                    disabled={isSubmitting || selectedAccount.status !== "OPEN"}
+                    aria-label="Валюта операции"
+                  >
+                    {CURRENCIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                   <button
                     className="button button-secondary"
                     type="submit"
@@ -326,18 +345,22 @@ export const MainPage = () => {
           ) : (
             <div className="transaction-list-wrap">
               <ul className="transaction-list">
-                {transactions.map((transaction) => (
-                  <li key={transaction.id} className="transaction-item">
-                    <div>
-                      <p className="transaction-type">{transaction.type}</p>
-                      <p className="transaction-date">{formatDate(transaction.createdAt)}</p>
-                    </div>
-                    <p className={transaction.type === "INCOME" ? "amount-plus" : "amount-minus"}>
-                      {transaction.type === "INCOME" ? "+" : "-"}
-                      {formatMoney(transaction.amount)}
-                    </p>
-                  </li>
-                ))}
+                {transactions.map((transaction) => {
+                  const cur = transaction.accountCurrency ?? transaction.operationCurrency ?? "RUB";
+                  const credit = isCreditLedgerType(transaction.type);
+                  return (
+                    <li key={transaction.id} className="transaction-item">
+                      <div>
+                        <p className="transaction-type">{transaction.type}</p>
+                        <p className="transaction-date">{formatDate(transaction.createdAt)}</p>
+                      </div>
+                      <p className={credit ? "amount-plus" : "amount-minus"}>
+                        {credit ? "+" : "-"}
+                        {formatMoney(transaction.amount, cur)}
+                      </p>
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           )}

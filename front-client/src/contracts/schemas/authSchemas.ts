@@ -13,7 +13,7 @@ export const userProfileSchema = z.object({
   email: z.string(),
   phone: z.number().nullable(),
   gender: z.string().nullable(),
-  role: z.enum(["CLIENT", "EMPLOYEE"]),
+  roles: z.array(z.enum(["CLIENT", "EMPLOYEE"])),
   isBlocked: z.boolean(),
   birthDate: z.string().nullable(),
 });

@@ -2,9 +2,6 @@ import { ApiError } from "./ApiError";
 
 export type ErrorSeverity = "page" | "global";
 
-/**
- * Нормализованная ошибка приложения для конвейера обработки.
- */
 export class AppError extends Error {
   readonly code: string;
   readonly severity: ErrorSeverity;

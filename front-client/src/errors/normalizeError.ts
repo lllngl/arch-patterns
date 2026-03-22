@@ -1,9 +1,6 @@
 import { ApiError } from "./ApiError";
 import { AppError } from "./AppError";
 
-/**
- * Приводит неизвестную ошибку к AppError для единообразной обработки.
- */
 export function normalizeError(err: unknown, fallbackMessage: string): AppError {
   if (err instanceof AppError) {
     return err;

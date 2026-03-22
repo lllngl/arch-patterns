@@ -6,9 +6,7 @@ export async function logoutUser(): Promise<void> {
   if (refreshToken) {
     try {
       await authApi.logout(refreshToken);
-    } catch {
-      //
-    }
+    } catch {}
   }
   tokenStorage.clearTokens();
 }

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { AccountDTO, AccountTransactionDTO } from "../contracts/banking";
+import type { AccountDTO, AccountTransactionDTO, CurrencyCode } from "../contracts/banking";
 import { normalizeError } from "../errors/normalizeError";
 import { useNotificationStore } from "./notificationStore";
 import {
@@ -31,8 +31,8 @@ interface AccountsState {
   unsubscribeTransactionsChannel: () => void;
   createAccount: (userId: string, name: string) => Promise<void>;
   closeAccount: (userId: string, accountId: string) => Promise<void>;
-  deposit: (userId: string, accountId: string, amount: number) => Promise<void>;
-  withdraw: (userId: string, accountId: string, amount: number) => Promise<void>;
+  deposit: (userId: string, accountId: string, amount: number, operationCurrency: CurrencyCode | null) => Promise<void>;
+  withdraw: (userId: string, accountId: string, amount: number, operationCurrency: CurrencyCode | null) => Promise<void>;
   transfer: (userId: string, payload: TransferRequest) => Promise<void>;
   clearError: () => void;
 }
@@ -99,16 +99,11 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     const client = new WsTransactionClient({
       accountId,
       accessToken,
-      onMessage: (msg) => {
-        if (msg.type === "FULL_SYNC") {
-          set({ transactions: msg.transactions });
-        }
-        if (msg.type === "INVALIDATE") {
-          void get().loadTransactions(msg.accountId);
-        }
+      onTransactionsInvalidated: (id) => {
+        void get().loadTransactions(id);
       },
       onError: () => {
-        useNotificationStore.getState().pushToast("info", "Поток операций недоступен, используется обновление по запросу.");
+        useNotificationStore.getState().pushToast("info", "Онлайн-обновление операций недоступно.");
       },
     });
     client.connect();
@@ -152,11 +147,11 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     }
   },
 
-  deposit: async (userId: string, accountId: string, amount: number) => {
+  deposit: async (userId: string, accountId: string, amount: number, operationCurrency: CurrencyCode | null) => {
     set({ isSubmitting: true, lastError: null });
     try {
-      await depositToAccount(accountId, amount);
-      useNotificationStore.getState().pushToast("success", "Средства зачислены.");
+      await depositToAccount(accountId, amount, operationCurrency);
+      useNotificationStore.getState().pushToast("success", "Операция принята (обработка асинхронная).");
       await Promise.all([get().loadAccounts(userId), get().loadTransactions(accountId)]);
     } catch (err) {
       const appErr = normalizeError(err, "Не удалось выполнить пополнение.");
@@ -167,11 +162,11 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     }
   },
 
-  withdraw: async (userId: string, accountId: string, amount: number) => {
+  withdraw: async (userId: string, accountId: string, amount: number, operationCurrency: CurrencyCode | null) => {
     set({ isSubmitting: true, lastError: null });
     try {
-      await withdrawFromAccount(accountId, amount);
-      useNotificationStore.getState().pushToast("success", "Средства сняты.");
+      await withdrawFromAccount(accountId, amount, operationCurrency);
+      useNotificationStore.getState().pushToast("success", "Операция принята (обработка асинхронная).");
       await Promise.all([get().loadAccounts(userId), get().loadTransactions(accountId)]);
     } catch (err) {
       const appErr = normalizeError(err, "Не удалось снять средства.");
@@ -186,7 +181,7 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     set({ isSubmitting: true, lastError: null });
     try {
       await bankingApi.transfer(payload);
-      useNotificationStore.getState().pushToast("success", "Перевод выполнен (или принят в обработку).");
+      useNotificationStore.getState().pushToast("success", "Перевод принят в обработку (асинхронно).");
       await Promise.all([get().loadAccounts(_userId), get().loadTransactions(payload.fromAccountId)]);
     } catch (err) {
       const appErr = normalizeError(err, "Перевод недоступен.");

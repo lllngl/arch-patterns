@@ -1,6 +1,3 @@
-/**
- * Просроченные платежи и кредитный рейтинг — заглушки контрактов до появления API.
- */
 export interface OverduePaymentDTO {
   loanId: string;
   dueDate: string;
@@ -10,7 +7,6 @@ export interface OverduePaymentDTO {
 
 export interface CreditRatingDTO {
   userId: string;
-  /** 0–100, чем выше — тем лучше прогноз возврата. */
   score: number;
   label: string;
   computedAt: string;

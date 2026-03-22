@@ -1,63 +1,70 @@
-import type { AccountTransactionDTO } from "../contracts/banking";
+import { Client } from "@stomp/stompjs";
 
-export type TransactionPushMessage =
-  | { type: "FULL_SYNC"; transactions: AccountTransactionDTO[] }
-  | { type: "INVALIDATE"; accountId: string };
-
-export interface WsTransactionClientOptions {
+export interface AccountTransactionsWsOptions {
   accountId: string;
   accessToken: string | null;
-  onMessage: (msg: TransactionPushMessage) => void;
+  onTransactionsInvalidated: (accountId: string) => void;
   onError?: (err: Error) => void;
 }
 
-/**
- * WebSocket-клиент для потока операций по счёту.
- * Заглушка: если VITE_WS_URL не задан — не подключается, используется только REST + polling.
- */
-export class WsTransactionClient {
-  private socket: WebSocket | null = null;
+function brokerWsUrl(): string | undefined {
+  const fromEnv = import.meta.env.VITE_ACCOUNT_WS_BROKER_URL as string | undefined;
+  if (fromEnv && fromEnv.length > 0) {
+    return fromEnv;
+  }
+  const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${proto}//${window.location.host}/ws`;
+}
 
-  constructor(private readonly options: WsTransactionClientOptions) {}
+export class WsTransactionClient {
+  private client: Client | null = null;
+
+  constructor(private readonly options: AccountTransactionsWsOptions) {}
 
   connect(): void {
-    const base = import.meta.env.VITE_WS_TRANSACTIONS_URL as string | undefined;
-    if (!base) {
+    const url = brokerWsUrl();
+    if (!url || !this.options.accessToken) {
       return;
     }
 
-    const url = new URL(base, window.location.origin);
-    url.searchParams.set("accountId", this.options.accountId);
-    if (this.options.accessToken) {
-      url.searchParams.set("token", this.options.accessToken);
-    }
+    const client = new Client({
+      brokerURL: url,
+      connectHeaders: {
+        Authorization: `Bearer ${this.options.accessToken}`,
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 10000,
+      heartbeatOutgoing: 10000,
+      onConnect: () => {
+        client.subscribe(`/topic/accounts/${this.options.accountId}/transactions`, (message) => {
+          try {
+            const raw: unknown = JSON.parse(message.body);
+            if (typeof raw !== "object" || raw === null) {
+              return;
+            }
+            const rec = raw as Record<string, unknown>;
+            if (rec.eventType === "TRANSACTIONS_INVALIDATED" && typeof rec.accountId === "string") {
+              this.options.onTransactionsInvalidated(rec.accountId);
+            }
+          } catch (err) {
+            this.options.onError?.(err instanceof Error ? err : new Error("WS message parse"));
+          }
+        });
+      },
+      onStompError: (frame) => {
+        this.options.onError?.(new Error(frame.headers.message ?? "STOMP error"));
+      },
+      onWebSocketError: () => {
+        this.options.onError?.(new Error("WebSocket error"));
+      },
+    });
 
-    this.socket = new WebSocket(url.toString());
-
-    this.socket.onmessage = (event) => {
-      try {
-        const raw: unknown = JSON.parse(event.data as string);
-        if (typeof raw !== "object" || raw === null) {
-          return;
-        }
-        const rec = raw as Record<string, unknown>;
-        if (rec.type === "FULL_SYNC" && Array.isArray(rec.transactions)) {
-          this.options.onMessage({ type: "FULL_SYNC", transactions: rec.transactions as AccountTransactionDTO[] });
-        } else if (rec.type === "INVALIDATE" && typeof rec.accountId === "string") {
-          this.options.onMessage({ type: "INVALIDATE", accountId: rec.accountId });
-        }
-      } catch (err) {
-        this.options.onError?.(err instanceof Error ? err : new Error("WS parse error"));
-      }
-    };
-
-    this.socket.onerror = () => {
-      this.options.onError?.(new Error("WebSocket error"));
-    };
+    this.client = client;
+    client.activate();
   }
 
   disconnect(): void {
-    this.socket?.close();
-    this.socket = null;
+    this.client?.deactivate();
+    this.client = null;
   }
 }

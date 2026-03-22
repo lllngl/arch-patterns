@@ -1,9 +1,6 @@
 import type { CreditRatingDTO, OverduePaymentDTO } from "../contracts/credit";
 import { httpClient } from "../network/httpClientSingleton";
 
-/**
- * Просрочки и кредитный рейтинг — заглушки до API.
- */
 export const creditApi = {
   async getOverduePayments(_userId: string): Promise<OverduePaymentDTO[]> {
     const endpoint = import.meta.env.VITE_CREDIT_OVERDUE_ENDPOINT as string | undefined;

@@ -4,9 +4,6 @@ export type ErrorHandlerResult = "handled" | "bubble";
 
 export type ErrorHandler = (error: AppError) => ErrorHandlerResult;
 
-/**
- * Цепочка обработчиков: первый вернувший handled останавливает распространение.
- */
 export function runErrorPipeline(error: AppError, handlers: ErrorHandler[]): ErrorHandlerResult {
   for (const handler of handlers) {
     const result = handler(error);

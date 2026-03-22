@@ -2,13 +2,10 @@ import { useEffect, useMemo, useState, type FormEvent, type UIEvent } from "reac
 import { useAuth } from "../../auth/useAuth";
 import { useLoansStore } from "../../stores/loansStore";
 import type { LoanStatus } from "../../contracts/banking";
+import { formatMoney } from "../../utils/money";
 import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
 import "../../ui/StatusBanner/StatusBanner.css";
 import "./LoansPage.css";
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(value);
-}
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -207,7 +204,7 @@ export const LoansPage = () => {
               <option value="">Выберите счет для зачисления</option>
               {openAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {(account.name || "Без названия")} - {formatMoney(account.balance)}
+                  {(account.name || "Без названия")} - {formatMoney(account.balance, account.currency)}
                 </option>
               ))}
             </select>
@@ -316,7 +313,7 @@ export const LoansPage = () => {
               <option value="">Счет списания</option>
               {openAccounts.map((account) => (
                 <option key={account.id} value={account.id}>
-                  {(account.name || "Без названия")} - {formatMoney(account.balance)}
+                  {(account.name || "Без названия")} - {formatMoney(account.balance, account.currency)}
                 </option>
               ))}
             </select>

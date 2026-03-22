@@ -1,8 +1,7 @@
-/** Реэкспорт банковских DTO для обратной совместимости импортов. */
 export type {
   SortOption,
   AccountStatus,
-  TransactionType,
+  LedgerTransactionType,
   LoanStatus,
   PaymentType,
   CurrencyCode,
@@ -15,5 +14,6 @@ export type {
   CreateLoanRequest,
   RepayLoanRequest,
   TransferRequest,
-  TransferResult,
+  MoneyOperationRequest,
+  OperationAcceptedResponse,
 } from "../contracts/banking";

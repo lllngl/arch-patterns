@@ -26,7 +26,7 @@ export function AppErrorBoundary({ children }: { children: ReactNode }) {
     <ErrorBoundary
       fallback={(error, reset) => <Fallback error={error} reset={reset} />}
       onError={(error) => {
-        // eslint-disable-next-line no-console -- глобальная диагностика
+        // eslint-disable-next-line no-console
         console.error("[AppErrorBoundary]", error);
       }}
     >

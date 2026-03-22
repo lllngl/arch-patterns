@@ -4,10 +4,6 @@ import { httpClient } from "../network/httpClientSingleton";
 
 const SETTINGS_BASE = "/api/v1/client-app/settings";
 
-/**
- * Настройки UI (тема, скрытые счета) через серверную часть приложения.
- * Заглушка: при отсутствии бэка возвращает локальный дефолт.
- */
 export const appSettingsApi = {
   async getSettings(): Promise<ClientAppSettingsDTO> {
     const disabled = import.meta.env.VITE_APP_SETTINGS_DISABLED === "true";

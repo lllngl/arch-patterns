@@ -25,7 +25,7 @@ export const ProfilePage = () => {
         setOverdue(o);
         setRating(r);
         if (o.length === 0 && r === null) {
-          setCreditMessage("Данные о просрочках и рейтинге появятся после настройки API (см. VITE_CREDIT_*).");
+          setCreditMessage("Просроченных платежей нет. Сведения о кредитном рейтинге пока отсутствуют.");
         }
       } catch {
         setCreditMessage("Не удалось загрузить кредитные данные.");
@@ -53,8 +53,10 @@ export const ProfilePage = () => {
           <span className="profile-value">{user?.email ?? "-"}</span>
         </div>
         <div className="profile-item">
-          <span className="profile-label">Роль</span>
-          <span className="profile-value">{user?.role ?? "-"}</span>
+          <span className="profile-label">Роли</span>
+          <span className="profile-value">
+            {user?.roles?.length ? user.roles.join(", ") : "-"}
+          </span>
         </div>
       </div>
 

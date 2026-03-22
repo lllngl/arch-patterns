@@ -1,6 +1,3 @@
-/**
- * Конфигурация OAuth 2.0 из переменных окружения Vite.
- */
 export function getOAuthAuthorizationEndpoint(): string | undefined {
   const v = import.meta.env.VITE_OAUTH_AUTHORIZATION_ENDPOINT as string | undefined;
   return v && v.length > 0 ? v : undefined;

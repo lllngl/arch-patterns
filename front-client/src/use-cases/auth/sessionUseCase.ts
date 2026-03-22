@@ -5,7 +5,7 @@ import type { UserProfile } from "../../contracts/auth";
 
 export async function loadUserProfileForClientApp(): Promise<UserProfile> {
   const profile = await authApi.getMyProfile();
-  if (profile.role !== "CLIENT") {
+  if (!profile.roles.includes("CLIENT")) {
     tokenStorage.clearTokens();
     throw new ApiError(403, "Это приложение доступно только клиентам (роль CLIENT).");
   }

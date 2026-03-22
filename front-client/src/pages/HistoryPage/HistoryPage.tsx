@@ -2,13 +2,10 @@ import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../../auth/useAuth";
 import { useAccountsStore } from "../../stores/accountsStore";
+import { formatMoney, isCreditLedgerType } from "../../utils/money";
 import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
 import "../../ui/StatusBanner/StatusBanner.css";
 import "./HistoryPage.css";
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(value);
-}
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -33,6 +30,8 @@ export const HistoryPage = () => {
   const selectAccount = useAccountsStore((s) => s.selectAccount);
   const loadAccounts = useAccountsStore((s) => s.loadAccounts);
   const loadTransactions = useAccountsStore((s) => s.loadTransactions);
+  const subscribeTransactionsChannel = useAccountsStore((s) => s.subscribeTransactionsChannel);
+  const unsubscribeTransactionsChannel = useAccountsStore((s) => s.unsubscribeTransactionsChannel);
   const isLoading = useAccountsStore((s) => s.isLoading);
   const lastError = useAccountsStore((s) => s.lastError);
 
@@ -65,6 +64,16 @@ export const HistoryPage = () => {
     void loadTransactions(selectedAccountId);
   }, [selectedAccountId, loadTransactions]);
 
+  useEffect(() => {
+    if (!selectedAccountId) {
+      return;
+    }
+    subscribeTransactionsChannel(selectedAccountId);
+    return () => {
+      unsubscribeTransactionsChannel();
+    };
+  }, [selectedAccountId, subscribeTransactionsChannel, unsubscribeTransactionsChannel]);
+
   return (
     <section className="history-page">
       <div className="history-page-header">
@@ -96,7 +105,7 @@ export const HistoryPage = () => {
         >
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
-              {(account.name || "Без названия")} — {formatMoney(account.balance)}
+              {(account.name || "Без названия")} — {formatMoney(account.balance, account.currency)}
             </option>
           ))}
         </select>
@@ -107,18 +116,22 @@ export const HistoryPage = () => {
           <p className="history-muted">Операций пока нет.</p>
         ) : (
           <ul className="history-list">
-            {transactions.map((transaction) => (
-              <li key={transaction.id} className="history-item">
-                <div>
-                  <p className="history-type">{transaction.type}</p>
-                  <p className="history-date">{formatDate(transaction.createdAt)}</p>
-                </div>
-                <p className={transaction.type === "INCOME" ? "history-amount-plus" : "history-amount-minus"}>
-                  {transaction.type === "INCOME" ? "+" : "-"}
-                  {formatMoney(transaction.amount)}
-                </p>
-              </li>
-            ))}
+            {transactions.map((transaction) => {
+              const cur = transaction.accountCurrency ?? transaction.operationCurrency ?? "RUB";
+              const credit = isCreditLedgerType(transaction.type);
+              return (
+                <li key={transaction.id} className="history-item">
+                  <div>
+                    <p className="history-type">{transaction.type}</p>
+                    <p className="history-date">{formatDate(transaction.createdAt)}</p>
+                  </div>
+                  <p className={credit ? "history-amount-plus" : "history-amount-minus"}>
+                    {credit ? "+" : "-"}
+                    {formatMoney(transaction.amount, cur)}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         )}
       </article>
