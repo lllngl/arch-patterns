@@ -39,9 +39,6 @@ subprojects {
             dependency 'org.mapstruct:mapstruct:1.5.5.Final'
             dependency 'org.mapstruct:mapstruct-processor:1.5.5.Final'
             dependency 'org.projectlombok:lombok-mapstruct-binding:0.2.0'
-            dependency 'io.jsonwebtoken:jjwt-api:0.12.3'
-            dependency 'io.jsonwebtoken:jjwt-impl:0.12.3'
-            dependency 'io.jsonwebtoken:jjwt-jackson:0.12.3'
         }
     }
 

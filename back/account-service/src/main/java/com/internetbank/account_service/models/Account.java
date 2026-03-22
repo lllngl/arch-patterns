@@ -1,7 +1,9 @@
 package com.internetbank.account_service.models;
 
 import com.internetbank.account_service.enums.AccountStatus;
+import com.internetbank.account_service.enums.AccountType;
 import com.internetbank.common.audit.Auditable;
+import com.internetbank.common.enums.CurrencyCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -50,8 +52,18 @@ public class Account extends Auditable {
     private BigDecimal balance;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "currency", nullable = false, length = 3)
+    @NotNull(message = "Account currency cannot be null")
+    private CurrencyCode currency;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 30)
     @NotNull(message = "Account status cannot be null")
     private AccountStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "type", nullable = false, length = 30)
+    @NotNull(message = "Account type cannot be null")
+    private AccountType type;
 }
 

@@ -23,16 +23,53 @@ spring:
     serialization:
       write-dates-as-timestamps: false
     date-format: yyyy-MM-dd HH:mm:ss
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "com.internetbank.account_service.messaging"
+        spring.json.value.default.type: com.internetbank.account_service.messaging.AccountOperationCommand
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/internetbank}
 
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
 
-jwt:
-  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
-  access-token-duration: PT2M    # 2 min
-  refresh-token-duration: P7D    # 7 days
-  refresh-token-replay-blacklist-duration: 15s
+bank:
+  base-currency: RUB
+  supported-currencies:
+    - RUB
+    - USD
+    - EUR
+  master-account-user-id: 00000000-0000-0000-0000-000000000001
+  master-account-name: Bank master account
+  commission-percent: 0.00
+
+exchange-rate:
+  base-url: ${EXCHANGE_RATE_BASE_URL:https://open.er-api.com/v6/latest}
+
+app:
+  kafka:
+    topics:
+      account-operation-commands: account-operation-commands
+    command-await-timeout-ms: 10000
+    command-await-poll-interval-ms: 100
+  websocket:
+    endpoint: /ws
+    account-transactions-destination-prefix: /topic/accounts
 
 logging:
   pattern:

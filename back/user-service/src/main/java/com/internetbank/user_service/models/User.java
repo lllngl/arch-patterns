@@ -6,12 +6,11 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -20,7 +19,7 @@ import java.util.*;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class User extends Auditable implements UserDetails{
+public class User extends Auditable {
 
     @Id
     @GeneratedValue(generator = "UUID")
@@ -43,6 +42,7 @@ public class User extends Auditable implements UserDetails{
 
     @Positive(message = "Phone number must be a positive number.")
     @NotNull(message = "Phone is required.")
+    @Column(unique = true, nullable = false)
     @Digits(integer = 15, fraction = 0, message = "Phone number can only contain digits and must not exceed 15 digits.")
     private Long phone;
 
@@ -56,10 +56,8 @@ public class User extends Auditable implements UserDetails{
     @Email(message = "Invalid email format.")
     private String email;
 
-    @NotBlank(message = "Password is required.")
-    @Size(max = 255, message = "Password must be less than 255 characters.")
-    @Column(nullable = false)
-    private String password;
+    @Column(name = "keycloak_user_id", unique = true)
+    private String keycloakUserId;
 
     @Past(message = "Birth date must be in the past.")
     @NotNull(message = "Birth date is required.")
@@ -72,40 +70,12 @@ public class User extends Auditable implements UserDetails{
     @NotNull(message = "IsBlocked is required.")
     private boolean isBlocked = false;
 
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(name = "role_id", nullable = false)
-    private Role role;
-
-    @OneToMany(mappedBy = "user")
-    private List<Token> tokens;
-
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return role == null ? List.of() : Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + role.getRolename().name()));
-    }
-
-    @Override
-    public String getUsername() {
-        return this.email;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return !isBlocked;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return !this.isBlocked;
-    }
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "users_roles",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "role_id")
+    )
+    @Builder.Default
+    private Set<Role> roles = new HashSet<>();
 }

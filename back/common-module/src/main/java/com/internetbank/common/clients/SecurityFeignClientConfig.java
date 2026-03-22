@@ -30,11 +30,9 @@ public class SecurityFeignClientConfig {
     @Bean
     public RequestInterceptor requestInterceptor() {
         return template -> {
-            log.info("Adding headers to Feign request");
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
             if (authentication != null && authentication.isAuthenticated()) {
                 Object credentials = authentication.getCredentials();
-                log.info("Adding Authorization header with credentials: {}", credentials);
                 if (credentials instanceof String jwtToken && !jwtToken.isBlank()) {
                     template.header("Authorization", "Bearer " + jwtToken);
                 }

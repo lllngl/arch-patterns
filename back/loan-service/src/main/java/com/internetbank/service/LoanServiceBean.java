@@ -4,6 +4,7 @@ import com.internetbank.common.clients.AccountServiceClient;
 import com.internetbank.common.clients.UserAppClient;
 import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.MoneyOperationRequest;
+import com.internetbank.common.dtos.OperationAcceptedResponse;
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.common.exceptions.BadRequestException;
@@ -11,6 +12,7 @@ import com.internetbank.common.exceptions.ForbiddenException;
 import com.internetbank.common.exceptions.InternalServerErrorException;
 import com.internetbank.common.exceptions.NotFoundException;
 import com.internetbank.common.parameters.PageableUtils;
+import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.common.security.ResourceAccessService;
 import com.internetbank.db.model.Loan;
 import com.internetbank.db.model.Tariff;
@@ -115,7 +117,7 @@ public class LoanServiceBean implements LoanService {
         UserDTO user = userAccount.getLeft();
         AccountDTO account = userAccount.getRight();
 
-        Loan loan = getLoanAndCheckAuthorization(loanId, user);
+        Loan loan = getLoanAndCheckAuthorization(loanId, toAuthenticatedUser(user));
 
         if (loan.getStatus() != LoanStatus.ACTIVE) throw new BadRequestException("Loan is not active. Current status: " + loan.getStatus());
         if (loan.getMonthlyPayment().compareTo(request.amount()) > 0
@@ -126,7 +128,7 @@ public class LoanServiceBean implements LoanService {
         if (!(account.userId().equals(user.id()))) throw new ForbiddenException("Account does not belong to user");
         if (account.balance().compareTo(request.amount()) < 0) throw new BadRequestException("Insufficient funds on account");
 
-        ResponseEntity<AccountDTO> transactionResponse = accountServiceClient.withdraw(
+        ResponseEntity<OperationAcceptedResponse> transactionResponse = accountServiceClient.withdraw(
                 request.accountId(), new MoneyOperationRequest(request.amount()), user.id());
 
         if (!transactionResponse.getStatusCode().is2xxSuccessful()) throw new InternalServerErrorException("Failed to debit amount from account");
@@ -157,7 +159,7 @@ public class LoanServiceBean implements LoanService {
 
     @Override
     @Transactional(readOnly = true)
-    public LoanResponse getLoan(UUID loanId, UserDTO user) {
+    public LoanResponse getLoan(UUID loanId, AuthenticatedUser user) {
         log.info("Getting loan: {}", loanId);
 
         Loan loan = getLoanAndCheckAuthorization(loanId, user);
@@ -214,8 +216,8 @@ public class LoanServiceBean implements LoanService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<LoanResponse> getMyLoans(UUID userId, PageRequestParams pageParams, LoanStatus status, UserDTO user) {
-        if (!user.id().equals(userId)) {
+    public Page<LoanResponse> getMyLoans(UUID userId, PageRequestParams pageParams, LoanStatus status, AuthenticatedUser user) {
+        if (!user.getId().equals(userId)) {
             throw new ForbiddenException("User can only access their own loans");
         }
 
@@ -278,7 +280,7 @@ public class LoanServiceBean implements LoanService {
         return Pair.of(userResponse, accountResponse.getBody());
     }
 
-    private Loan getLoanAndCheckAuthorization(UUID loanId, UserDTO user) {
+    private Loan getLoanAndCheckAuthorization(UUID loanId, AuthenticatedUser user) {
         return resourceAccessService.getResourceAndCheckAuthorization(
                 loanId,
                 user,
@@ -286,5 +288,9 @@ public class LoanServiceBean implements LoanService {
                 "Loan",
                 Loan::getUserId
         );
+    }
+
+    private AuthenticatedUser toAuthenticatedUser(UserDTO user) {
+        return AuthenticatedUser.external(user.id(), user.keycloakUserId(), user.email(), user.roles());
     }
 }

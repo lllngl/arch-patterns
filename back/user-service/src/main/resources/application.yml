@@ -19,15 +19,23 @@ spring:
     properties:
       hibernate:
         format_sql: true
-jwt:
-  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
-  access-token-duration: PT2M    # 2 минуты
-  refresh-token-duration: P7D    # 7 дней
-  refresh-token-replay-blacklist-duration: 15s
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/internetbank}
 
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
+
+keycloak:
+  server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
+  realm: internetbank
+  initial-temporary-password: ${KEYCLOAK_INITIAL_TEMPORARY_PASSWORD:string1}
+  admin:
+    client-id: user-service-admin
+    client-secret: t0UIAM1iHI6iOQw25VW7C9FdU6DtLUkI
 
 logging:
   pattern:

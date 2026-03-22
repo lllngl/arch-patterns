@@ -1,10 +1,15 @@
 spring:
   application:
     name: common-module
-jwt:
-  secret: mp1CBLrNvOPkvNFMijS0l7YG3Un5vzq0ICBgg3z3PJQ=
-  access-token-duration: PT2M    # 2 min
-  refresh-token-duration: P7D    # 7 days
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/internetbank}
+
+keycloak:
+  server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
+  realm: ${KEYCLOAK_REALM:internetbank}
 
 internal:
   api:

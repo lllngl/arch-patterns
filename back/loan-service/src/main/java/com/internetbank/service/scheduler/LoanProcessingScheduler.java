@@ -4,6 +4,7 @@ import com.internetbank.common.clients.AccountServiceClient;
 import com.internetbank.common.clients.UserAppClient;
 import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.MoneyOperationRequest;
+import com.internetbank.common.dtos.OperationAcceptedResponse;
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.db.model.Loan;
 import com.internetbank.db.model.Tariff;
@@ -144,7 +145,7 @@ public class LoanProcessingScheduler {
                 return false;
             }
 
-            ResponseEntity<AccountDTO> transactionResponse = accountServiceClient.withdraw(
+            ResponseEntity<OperationAcceptedResponse> transactionResponse = accountServiceClient.withdraw(
                     loan.getAccountId(),
                     new MoneyOperationRequest(loan.getMonthlyPayment()),
                     user.id()
@@ -241,7 +242,7 @@ public class LoanProcessingScheduler {
                 return;
             }
 
-            ResponseEntity<AccountDTO> depositResponse = accountServiceClient.deposit(
+            ResponseEntity<OperationAcceptedResponse> depositResponse = accountServiceClient.deposit(
                     loan.getAccountId(),
                     new MoneyOperationRequest(loan.getAmount()),
                     user.id()

@@ -4,9 +4,9 @@
 
 ## Что здесь лежит
 
-- `dtos` — общие DTO (например, `UserDTO`, `AccountDTO`, `AuthRequest`, `AuthResponse`, `PageRequestParams`).
+- `dtos` — общие DTO (например, `UserDTO`, `AccountDTO`, `PageRequestParams`).
 - `audit` — аудит сущностей (`Auditable`, `SpringSecurityAuditorAware`).
-- `security` — общие security-компоненты (JWT, фильтры, проверки доступа, конфигурация).
+- `security` — общие security-компоненты (OIDC resource server, principal, проверки доступа, конфигурация).
 - `exceptions` — единый набор исключений и обработчик (`GlobalExceptionHandler`, `ApiErrorResponse`).
 - `parameters` — утилиты для пагинации и фильтрации (`PageableUtils`, `SpecificationFilter`).
 - `clients` — общие Feign-клиенты и конфиг для межсервисного взаимодействия.
@@ -52,7 +52,9 @@ private void ensureUserExists(UUID userId) {
 
 ### 3) Общая security-конфигурация
 
-- Подключайте компоненты `SecurityConfig`, `CustomAuthFilter`, `JwtService` через `@Import(...)`.
+- Подключайте `SecurityConfig` через `@Import(...)`.
+- Все сервисы валидируют JWT access token, выпущенный Keycloak, через `spring-security-oauth2-resource-server`.
+- Для внутренних запросов используется `InternalRequestAuthenticationFilter` и `X-Internal-Request`.
 
 ### 4) Общие DTO и ошибки
 

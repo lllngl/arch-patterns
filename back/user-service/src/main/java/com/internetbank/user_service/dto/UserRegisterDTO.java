@@ -28,6 +28,7 @@ public class UserRegisterDTO {
     private String patronymic;
 
     @Positive(message = "Phone number must be a positive number.")
+    @NotNull(message = "Phone number is required.")
     @Digits(integer = 15, fraction = 0, message = "Phone number can only contain digits and must not exceed 15 digits.")
     private Long phone;
 
@@ -40,13 +41,6 @@ public class UserRegisterDTO {
     @Email(message = "Invalid email format.")
     @Schema(example = "example@example.com")
     private String email;
-
-    @NotBlank(message = "Password is required.")
-    @Size(max = 255, message = "Password must be less than 255 characters.")
-    @Schema(example = "string1")
-    @NotBlank(message = "User password cannot be empty")
-    @Pattern(regexp = ".*\\d.*", message = "Password must contain at least one digit")
-    private String password;
 
     @Past(message = "Birth date must be in the past.")
     @NotNull(message = "Birth date is required.")
