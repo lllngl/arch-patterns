@@ -19,6 +19,7 @@ import {
 import { NavLink, useNavigate } from "react-router-dom";
 import { getInitials } from "@/utils/getInitials";
 import { useAuthStore } from "@/stores/auth";
+import { appEnv } from "@/config/env";
 
 export function NavUser() {
   const { isMobile } = useSidebar();
@@ -32,7 +33,9 @@ export function NavUser() {
 
   async function handleLogout() {
     await logout();
-    navigate("/login", { replace: true });
+    if (!appEnv.ssoEnabled) {
+      navigate("/login", { replace: true });
+    }
   }
 
   return (

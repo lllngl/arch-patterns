@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuthStore } from "@/stores/auth";
 import { Skeleton } from "@/components/ui/skeleton";
+import { hasRole } from "@/lib/roles";
 
 export function ProtectedRoute() {
   const user = useAuthStore((s) => s.user);
@@ -22,7 +23,7 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace />;
   }
 
-  if (user.role !== "EMPLOYEE") {
+  if (!hasRole(user, "EMPLOYEE")) {
     clearAuth();
     return <Navigate to="/login" replace />;
   }

@@ -11,6 +11,7 @@ export default defineConfig({
     },
   },
   server: {
+    port: 5174,
     proxy: {
       "/api/v1/auth": {
         target: "http://localhost:9000",
@@ -20,8 +21,17 @@ export default defineConfig({
         target: "http://localhost:9000",
         changeOrigin: true,
       },
+      "/api/v1/preferences": {
+        target: "http://localhost:9010",
+        changeOrigin: true,
+      },
       "/api/v1/accounts": {
         target: "http://localhost:9005",
+        changeOrigin: true,
+      },
+      "/ws": {
+        target: "ws://localhost:9005",
+        ws: true,
         changeOrigin: true,
       },
       "/api/v1/loan": {

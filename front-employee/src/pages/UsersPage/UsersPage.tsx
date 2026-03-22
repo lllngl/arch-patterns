@@ -25,13 +25,10 @@ import type { Page, UserDTO } from "@/types";
 import { CreateUserDialog } from "./CreateUserDialog";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { getErrorMessage } from "@/lib/http-error";
+import { RoleBadges } from "@/components/custom/RoleBadges";
 
 const PAGE_SIZE = 10;
-
-const ROLE_LABELS: Record<string, string> = {
-  EMPLOYEE: "Сотрудник",
-  CLIENT: "Клиент",
-};
 
 export default function UsersPage() {
   const navigate = useNavigate();
@@ -54,8 +51,8 @@ export default function UsersPage() {
       if (blockedFilter !== "all") params.isBlocked = blockedFilter === "true";
       const { data } = await usersApi.getAll(params);
       setData(data);
-    } catch {
-      toast.error("Ошибка загрузки пользователей");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -113,7 +110,7 @@ export default function UsersPage() {
               <TableHead>ФИО</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Телефон</TableHead>
-              <TableHead>Роль</TableHead>
+              <TableHead>Роли</TableHead>
               <TableHead>Статус</TableHead>
             </TableRow>
           </TableHeader>
@@ -156,9 +153,7 @@ export default function UsersPage() {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.phone ? `+${user.phone}` : "—"}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">
-                        {ROLE_LABELS[user.role] ?? user.role}
-                      </Badge>
+                      <RoleBadges roles={user.roles} />
                     </TableCell>
                     <TableCell>
                       {user.isBlocked ? (

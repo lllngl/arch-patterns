@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -16,18 +15,13 @@ import { useAuthStore } from "@/stores/auth";
 import { usersApi } from "@/api/users";
 import { toast } from "sonner";
 import { Loader2, Pencil, X } from "lucide-react";
-import axios from "axios";
-import { localizeError } from "@/lib/error-messages";
 import type { Gender } from "@/types";
+import { getErrorMessage } from "@/lib/http-error";
+import { RoleBadges } from "@/components/custom/RoleBadges";
 
 const GENDER_LABELS: Record<string, string> = {
   MALE: "Мужской",
   FEMALE: "Женский",
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  EMPLOYEE: "Сотрудник",
-  CLIENT: "Клиент",
 };
 
 export default function ProfilePage() {
@@ -72,10 +66,8 @@ export default function ProfilePage() {
       await fetchUser();
       setEditing(false);
       toast.success("Профиль обновлён");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -211,11 +203,9 @@ export default function ProfilePage() {
                   : "—"}
               </span>
 
-              <span className="text-muted-foreground">Роль</span>
+              <span className="text-muted-foreground">Роли</span>
               <span>
-                <Badge variant="secondary">
-                  {ROLE_LABELS[user.role] ?? user.role}
-                </Badge>
+                <RoleBadges roles={user.roles} variant="secondary" />
               </span>
             </div>
           )}

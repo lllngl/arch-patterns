@@ -23,6 +23,7 @@ import type { LoansFilterParams } from "@/api/loans";
 import type { LoanResponse, LoanStatus, Page } from "@/types";
 import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getErrorMessage } from "@/lib/http-error";
 
 const PAGE_SIZE = 10;
 
@@ -64,8 +65,8 @@ export default function LoansPage() {
       if (statusFilter !== "all") params.status = statusFilter as LoanStatus;
       const { data } = await loansApi.getAll(params);
       setData(data);
-    } catch {
-      toast.error("Ошибка загрузки кредитов");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
