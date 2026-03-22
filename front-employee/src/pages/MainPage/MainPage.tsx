@@ -2,40 +2,24 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuthStore } from "@/stores/auth";
-import { usersApi } from "@/api/users";
-import { accountsApi } from "@/api/accounts";
 import { Users, Wallet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface Stats {
-  totalUsers: number;
-  totalAccounts: number;
-}
+import { toast } from "sonner";
+import { loadDashboardStats, type DashboardStats } from "@/use-cases/dashboard/load-dashboard-stats";
+import { getErrorMessage } from "@/lib/http-error";
 
 export default function MainPage() {
   const user = useAuthStore((s) => s.user);
-  const [stats, setStats] = useState<Stats | null>(null);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchStats() {
       try {
-        const [usersRes, accountsRes] = await Promise.all([
-          usersApi.getAll({ page: 0, size: 1, sortBy: "id", sortDir: "ASC" }),
-          accountsApi.getAll({
-            page: 0,
-            size: 1,
-            sortBy: "id",
-            sortDir: "ASC",
-          }),
-        ]);
-        setStats({
-          totalUsers: usersRes.data.totalElements,
-          totalAccounts: accountsRes.data.totalElements,
-        });
-      } catch {
-        //
+        setStats(await loadDashboardStats());
+      } catch (error) {
+        toast.error(getErrorMessage(error));
       } finally {
         setLoading(false);
       }

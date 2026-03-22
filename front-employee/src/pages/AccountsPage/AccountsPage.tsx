@@ -22,7 +22,9 @@ import { accountsApi } from "@/api/accounts";
 import type { AccountsFilterParams } from "@/api/accounts";
 import type { AccountDTO, AccountStatus, Page } from "@/types";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
+import { useAppSettingsStore } from "@/stores/app-settings";
+import { getErrorMessage } from "@/lib/http-error";
 
 const PAGE_SIZE = 10;
 
@@ -37,6 +39,9 @@ export default function AccountsPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const hiddenAccountIds = useAppSettingsStore((state) => state.hiddenAccountIds);
+  const isAccountHidden = useAppSettingsStore((state) => state.isAccountHidden);
+  const [showHiddenAccounts, setShowHiddenAccounts] = useState(false);
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
@@ -52,12 +57,17 @@ export default function AccountsPage() {
       }
       const { data } = await accountsApi.getAll(params);
       setData(data);
-    } catch {
-      toast.error("Ошибка загрузки счетов");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   }, [page, statusFilter]);
+
+  const visibleAccounts =
+    data?.content.filter(
+      (account) => showHiddenAccounts || !isAccountHidden(account.id)
+    ) ?? [];
 
   useEffect(() => {
     fetchAccounts();
@@ -67,7 +77,7 @@ export default function AccountsPage() {
     <div className="p-6 space-y-4">
       <h1 className="text-2xl font-bold tracking-tight">Все счета</h1>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <Select
           value={statusFilter}
           onValueChange={(v) => {
@@ -84,6 +94,16 @@ export default function AccountsPage() {
             <SelectItem value="CLOSED">Закрытые</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowHiddenAccounts((value) => !value)}
+        >
+          {showHiddenAccounts ? <EyeOff /> : <Eye />}
+          {showHiddenAccounts
+            ? "Скрыть отмеченные счета"
+            : `Показать скрытые (${hiddenAccountIds.length})`}
+        </Button>
       </div>
 
       <div className="border rounded-md">
@@ -108,54 +128,71 @@ export default function AccountsPage() {
                   ))}
                 </TableRow>
               ))
-            ) : data?.content.length === 0 ? (
+            ) : visibleAccounts.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={5}
                   className="text-center py-8 text-muted-foreground"
                 >
-                  Счета не найдены
+                  {data?.content.length
+                    ? "Все счета скрыты настройками приложения"
+                    : "Счета не найдены"}
                 </TableCell>
               </TableRow>
             ) : (
-              data?.content.map((account) => (
-                <TableRow
-                  key={account.id}
-                  className="cursor-pointer"
-                  onClick={() => navigate(`/accounts/${account.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    {account.name || "Без названия"}
-                  </TableCell>
-                  <TableCell>
-                    <Link
-                      to={`/users/${account.userId}`}
-                      className="text-primary hover:underline text-xs font-mono"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {account.userId.slice(0, 8)}...
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    {Number(account.balance).toLocaleString("ru-RU", {
-                      style: "currency",
-                      currency: "RUB",
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        account.status === "OPEN" ? "secondary" : "outline"
-                      }
-                    >
-                      {STATUS_LABELS[account.status] ?? account.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(account.createdAt).toLocaleDateString("ru-RU")}
-                  </TableCell>
-                </TableRow>
-              ))
+              visibleAccounts.map((account) => {
+                const ownerId = account.userId;
+
+                return (
+                  <TableRow
+                    key={account.id}
+                    className="cursor-pointer"
+                    onClick={() => navigate(`/accounts/${account.id}`)}
+                  >
+                    <TableCell className="font-medium">
+                      {account.name || "Без названия"}
+                    </TableCell>
+                    <TableCell>
+                      {ownerId ? (
+                        <Link
+                          to={`/users/${ownerId}`}
+                          className="text-primary hover:underline text-xs font-mono"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {ownerId.slice(0, 8)}...
+                        </Link>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">
+                          Системный счёт
+                        </span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {Number(account.balance).toLocaleString("ru-RU", {
+                        style: "currency",
+                        currency: "RUB",
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          account.status === "OPEN" ? "secondary" : "outline"
+                        }
+                      >
+                        {STATUS_LABELS[account.status] ?? account.status}
+                      </Badge>
+                      {isAccountHidden(account.id) && (
+                        <Badge variant="outline" className="ml-2">
+                          Скрыт в приложении
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(account.createdAt).toLocaleDateString("ru-RU")}
+                    </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
         </Table>

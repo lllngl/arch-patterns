@@ -28,16 +28,17 @@ import { accountsApi } from "@/api/accounts";
 import { loansApi } from "@/api/loans";
 import type { LoansFilterParams } from "@/api/loans";
 import type {
+  CreditRatingResponse,
   UserDTO,
   AccountDTO,
   LoanResponse,
   LoanStatus,
   Page,
   Gender,
+  PaymentHistoryResponse,
+  PaymentStatus,
 } from "@/types";
 import { toast } from "sonner";
-import axios from "axios";
-import { localizeError } from "@/lib/error-messages";
 import {
   ArrowLeft,
   Banknote,
@@ -52,15 +53,12 @@ import {
   Wallet,
   X,
 } from "lucide-react";
+import { getErrorMessage } from "@/lib/http-error";
+import { RoleBadges } from "@/components/custom/RoleBadges";
 
 const GENDER_LABELS: Record<string, string> = {
   MALE: "Мужской",
   FEMALE: "Женский",
-};
-
-const ROLE_LABELS: Record<string, string> = {
-  EMPLOYEE: "Сотрудник",
-  CLIENT: "Клиент",
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -87,6 +85,13 @@ const LOAN_STATUS_VARIANT: Record<
   REJECTED: "destructive",
 };
 
+const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  PAID: "Оплачен",
+  LATE: "С опозданием",
+  OVERDUE: "Просрочен",
+  SKIPPED: "Пропущен",
+};
+
 const PAGE_SIZE = 10;
 
 export default function UserDetailPage() {
@@ -99,9 +104,15 @@ export default function UserDetailPage() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [loadingAccounts, setLoadingAccounts] = useState(true);
   const [loadingLoans, setLoadingLoans] = useState(true);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
   const [accountPage, setAccountPage] = useState(0);
   const [loanPage, setLoanPage] = useState(0);
   const [loanStatusFilter, setLoanStatusFilter] = useState<string>("all");
+  const [creditRating, setCreditRating] = useState<CreditRatingResponse | null>(
+    null
+  );
+  const [overduePayments, setOverduePayments] =
+    useState<Page<PaymentHistoryResponse> | null>(null);
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -119,7 +130,7 @@ export default function UserDetailPage() {
     usersApi
       .getById(userId)
       .then(({ data }) => setUser(data))
-      .catch(() => toast.error("Ошибка загрузки пользователя"))
+      .catch((error) => toast.error(getErrorMessage(error)))
       .finally(() => setLoadingUser(false));
   }, [userId]);
 
@@ -134,8 +145,8 @@ export default function UserDetailPage() {
         sortDir: "ASC",
       });
       setAccounts(data);
-    } catch {
-      //
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoadingAccounts(false);
     }
@@ -159,8 +170,8 @@ export default function UserDetailPage() {
         params.status = loanStatusFilter as LoanStatus;
       const { data } = await loansApi.getByUser(userId, params);
       setLoans(data);
-    } catch {
-      //
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoadingLoans(false);
     }
@@ -169,6 +180,33 @@ export default function UserDetailPage() {
   useEffect(() => {
     fetchLoans();
   }, [fetchLoans]);
+
+  const fetchAnalytics = useCallback(async () => {
+    if (!userId) return;
+
+    setLoadingAnalytics(true);
+    try {
+      const [creditRatingResponse, overduePaymentsResponse] = await Promise.all([
+        loansApi.getCreditRatingByUser(userId),
+        loansApi.getOverduePaymentsByUser(userId, {
+          page: 0,
+          size: PAGE_SIZE,
+          sortBy: "expectedPaymentDate",
+          sortDir: "DESC",
+        }),
+      ]);
+      setCreditRating(creditRatingResponse.data);
+      setOverduePayments(overduePaymentsResponse.data);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setLoadingAnalytics(false);
+    }
+  }, [userId]);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
 
   function startEditing() {
     if (!user) return;
@@ -199,10 +237,8 @@ export default function UserDetailPage() {
       setUser(data);
       setEditing(false);
       toast.success("Данные обновлены");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setSaving(false);
     }
@@ -220,10 +256,8 @@ export default function UserDetailPage() {
       }
       const { data } = await usersApi.getById(user.id);
       setUser(data);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
@@ -234,10 +268,8 @@ export default function UserDetailPage() {
     try {
       await usersApi.revokeSessions(user.id);
       toast.success("Все сессии пользователя сброшены");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
@@ -248,10 +280,8 @@ export default function UserDetailPage() {
       await usersApi.delete(user.id);
       toast.success("Пользователь удалён");
       navigate("/users");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
@@ -275,6 +305,18 @@ export default function UserDetailPage() {
   const fullName = [user.lastName, user.firstName, user.patronymic]
     .filter(Boolean)
     .join(" ");
+
+  function formatDate(value: string | null) {
+    if (!value) return "—";
+    return new Date(value).toLocaleDateString("ru-RU");
+  }
+
+  function formatCurrencyByCode(value: number, currencyCode: string) {
+    return Number(value).toLocaleString("ru-RU", {
+      style: "currency",
+      currency: currencyCode,
+    });
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -432,11 +474,9 @@ export default function UserDetailPage() {
                   : "—"}
               </span>
 
-              <span className="text-muted-foreground">Роль</span>
+              <span className="text-muted-foreground">Роли</span>
               <span>
-                <Badge variant="secondary">
-                  {ROLE_LABELS[user.role] ?? user.role}
-                </Badge>
+                <RoleBadges roles={user.roles} variant="secondary" />
               </span>
             </div>
           )}
@@ -541,6 +581,121 @@ export default function UserDetailPage() {
 
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">Кредиты пользователя</h2>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
+          <div className="border rounded-md p-4 bg-muted/40 space-y-3">
+            <p className="font-medium">Кредитная аналитика</p>
+            {loadingAnalytics ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton key={index} className="h-6 w-full" />
+                ))}
+              </div>
+            ) : !creditRating ? (
+              <p className="text-muted-foreground text-sm">
+                Не удалось загрузить кредитный рейтинг.
+              </p>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <p className="text-muted-foreground text-xs">Score</p>
+                  <p className="text-xl font-semibold">{creditRating.score}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Grade</p>
+                  <p className="text-xl font-semibold">{creditRating.grade}</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Просрочки</p>
+                  <p className="text-lg font-semibold">
+                    {creditRating.overdueCount}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Новый кредит</p>
+                  <p className="text-lg font-semibold">
+                    {creditRating.isEligibleForNewLoan ? "Доступен" : "Недоступен"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Штрафы</p>
+                  <p className="text-lg font-semibold">
+                    {Number(creditRating.totalPenalties).toLocaleString("ru-RU", {
+                      style: "currency",
+                      currency: "RUB",
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground text-xs">Последняя просрочка</p>
+                  <p className="text-lg font-semibold">
+                    {formatDate(creditRating.lastOverdueDate)}
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="border rounded-md p-4 space-y-3">
+            <p className="font-medium">Просроченные платежи</p>
+            {loadingAnalytics ? (
+              <div className="space-y-2">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <Skeleton key={index} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : !overduePayments || overduePayments.content.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                Просроченных платежей у пользователя нет.
+              </p>
+            ) : (
+              <div className="border rounded-md">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Сумма</TableHead>
+                      <TableHead>План</TableHead>
+                      <TableHead>Факт</TableHead>
+                      <TableHead>Статус</TableHead>
+                      <TableHead>Штраф</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {overduePayments.content.map((payment) => (
+                      <TableRow key={payment.paymentId}>
+                        <TableCell>
+                          {formatCurrencyByCode(
+                            payment.paymentAmount,
+                            payment.currencyCode
+                          )}
+                        </TableCell>
+                        <TableCell>{formatDate(payment.expectedPaymentDate)}</TableCell>
+                        <TableCell>{formatDate(payment.actualPaymentDate)}</TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              payment.status === "OVERDUE" ||
+                              payment.status === "SKIPPED"
+                                ? "destructive"
+                                : "outline"
+                            }
+                          >
+                            {PAYMENT_STATUS_LABELS[payment.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {formatCurrencyByCode(
+                            payment.penaltyAmount,
+                            payment.loanCurrencyCode
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="flex items-center gap-3">
           <Select

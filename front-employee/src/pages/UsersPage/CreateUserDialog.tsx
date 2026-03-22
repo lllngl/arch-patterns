@@ -20,9 +20,8 @@ import {
 import { usersApi } from "@/api/users";
 import { toast } from "sonner";
 import { Loader2, Plus } from "lucide-react";
-import axios from "axios";
-import { localizeError } from "@/lib/error-messages";
 import type { Gender, RoleName } from "@/types";
+import { getErrorMessage } from "@/lib/http-error";
 
 interface CreateUserDialogProps {
   onCreated: () => void;
@@ -40,7 +39,7 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
   const [password, setPassword] = useState("");
   const [birthDate, setBirthDate] = useState("");
   const [gender, setGender] = useState<Gender>("MALE");
-  const [role, setRole] = useState<RoleName>("CLIENT");
+  const [roles, setRoles] = useState<RoleName[]>(["CLIENT"]);
 
   function resetForm() {
     setFirstName("");
@@ -51,7 +50,15 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
     setPassword("");
     setBirthDate("");
     setGender("MALE");
-    setRole("CLIENT");
+    setRoles(["CLIENT"]);
+  }
+
+  function toggleRole(roleName: RoleName) {
+    setRoles((currentRoles) =>
+      currentRoles.includes(roleName)
+        ? currentRoles.filter((value) => value !== roleName)
+        : [...currentRoles, roleName]
+    );
   }
 
   async function handleSubmit(e: FormEvent) {
@@ -70,16 +77,14 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
           birthDate,
           gender,
         },
-        role
+        roles
       );
       toast.success("Пользователь создан");
       setOpen(false);
       resetForm();
       onCreated();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -194,19 +199,28 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
               </Select>
             </div>
             <div className="space-y-1.5">
-              <Label>Роль *</Label>
-              <Select
-                value={role}
-                onValueChange={(v) => setRole(v as RoleName)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="CLIENT">Клиент</SelectItem>
-                  <SelectItem value="EMPLOYEE">Сотрудник</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label>Роли *</Label>
+              <div className="flex flex-col gap-2">
+                <Button
+                  type="button"
+                  variant={roles.includes("CLIENT") ? "default" : "outline"}
+                  className="justify-start"
+                  onClick={() => toggleRole("CLIENT")}
+                >
+                  Клиент
+                </Button>
+                <Button
+                  type="button"
+                  variant={roles.includes("EMPLOYEE") ? "default" : "outline"}
+                  className="justify-start"
+                  onClick={() => toggleRole("EMPLOYEE")}
+                >
+                  Сотрудник
+                </Button>
+              </div>
+              <p className="text-muted-foreground text-xs">
+                Можно выбрать сразу несколько ролей.
+              </p>
             </div>
           </div>
 
@@ -218,7 +232,7 @@ export function CreateUserDialog({ onCreated }: CreateUserDialogProps) {
             >
               Отмена
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || roles.length === 0}>
               {loading && <Loader2 className="animate-spin" />}
               Создать
             </Button>

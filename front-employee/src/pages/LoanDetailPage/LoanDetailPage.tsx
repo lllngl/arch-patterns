@@ -4,12 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { loansApi } from "@/api/loans";
-import type { LoanResponse, LoanStatus } from "@/types";
+import type {
+  CreditRatingResponse,
+  LoanResponse,
+  LoanStatus,
+  Page,
+  PaymentHistoryResponse,
+  PaymentStatus,
+} from "@/types";
 import { toast } from "sonner";
-import axios from "axios";
-import { localizeError } from "@/lib/error-messages";
 import { ArrowLeft, Check, X } from "lucide-react";
+import { getErrorMessage } from "@/lib/http-error";
 
 const STATUS_LABELS: Record<LoanStatus, string> = {
   PENDING: "Ожидает одобрения",
@@ -30,21 +44,72 @@ const STATUS_VARIANT: Record<
   REJECTED: "destructive",
 };
 
+const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  PAID: "Оплачен",
+  LATE: "С опозданием",
+  OVERDUE: "Просрочен",
+  SKIPPED: "Пропущен",
+};
+
 export default function LoanDetailPage() {
   const { loanId } = useParams<{ loanId: string }>();
   const navigate = useNavigate();
   const [loan, setLoan] = useState<LoanResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const [creditRating, setCreditRating] = useState<CreditRatingResponse | null>(
+    null
+  );
+  const [overduePayments, setOverduePayments] =
+    useState<Page<PaymentHistoryResponse> | null>(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   useEffect(() => {
     if (!loanId) return;
-    setLoading(true);
-    loansApi
-      .getById(loanId)
-      .then(({ data }) => setLoan(data))
-      .catch(() => toast.error("Ошибка загрузки кредита"))
-      .finally(() => setLoading(false));
+    const currentLoanId = loanId;
+
+    async function loadLoan() {
+      setLoading(true);
+      try {
+        const { data } = await loansApi.getById(currentLoanId);
+        setLoan(data);
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    void loadLoan();
   }, [loanId]);
+
+  useEffect(() => {
+    if (!loanId || !loan?.userId) return;
+    const currentLoanId = loanId;
+    const currentUserId = loan.userId;
+
+    async function loadAnalytics() {
+      setLoadingAnalytics(true);
+      try {
+        const [creditRatingResponse, overduePaymentsResponse] = await Promise.all([
+          loansApi.getCreditRatingByUser(currentUserId),
+          loansApi.getOverduePaymentsByLoan(currentLoanId, {
+            page: 0,
+            size: 10,
+            sortBy: "expectedPaymentDate",
+            sortDir: "DESC",
+          }),
+        ]);
+        setCreditRating(creditRatingResponse.data);
+        setOverduePayments(overduePaymentsResponse.data);
+      } catch (error) {
+        toast.error(getErrorMessage(error));
+      } finally {
+        setLoadingAnalytics(false);
+      }
+    }
+
+    void loadAnalytics();
+  }, [loan?.userId, loanId]);
 
   async function handleApprove() {
     if (!loan) return;
@@ -53,10 +118,8 @@ export default function LoanDetailPage() {
       toast.success("Кредит одобрен");
       const { data } = await loansApi.getById(loan.id);
       setLoan(data);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
@@ -68,10 +131,8 @@ export default function LoanDetailPage() {
       toast.success("Кредит отклонён");
       const { data } = await loansApi.getById(loan.id);
       setLoan(data);
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
@@ -79,6 +140,13 @@ export default function LoanDetailPage() {
     return Number(val).toLocaleString("ru-RU", {
       style: "currency",
       currency: "RUB",
+    });
+  }
+
+  function formatCurrencyByCode(value: number, currencyCode: string) {
+    return Number(value).toLocaleString("ru-RU", {
+      style: "currency",
+      currency: currencyCode,
     });
   }
 
@@ -184,6 +252,133 @@ export default function LoanDetailPage() {
             <span className="text-muted-foreground">Дата создания</span>
             <span>{formatDate(loan.createdAt)}</span>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-4xl">
+        <CardHeader>
+          <CardTitle>Кредитный рейтинг заёмщика</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingAnalytics ? (
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <Skeleton key={index} className="h-16 w-full" />
+              ))}
+            </div>
+          ) : !creditRating ? (
+            <p className="text-muted-foreground text-sm">
+              Не удалось загрузить кредитный рейтинг.
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Score</p>
+                <p className="text-2xl font-semibold">{creditRating.score}</p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Grade</p>
+                <p className="text-2xl font-semibold">{creditRating.grade}</p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Всего кредитов</p>
+                <p className="text-2xl font-semibold">{creditRating.totalLoans}</p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Просрочек</p>
+                <p className="text-2xl font-semibold">
+                  {creditRating.overdueCount}
+                </p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Активные</p>
+                <p className="text-xl font-semibold">{creditRating.activeLoans}</p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Погашенные</p>
+                <p className="text-xl font-semibold">{creditRating.paidLoans}</p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Штрафы</p>
+                <p className="text-xl font-semibold">
+                  {formatMoney(creditRating.totalPenalties)}
+                </p>
+              </div>
+              <div className="rounded-md border p-4">
+                <p className="text-muted-foreground text-xs">Новый кредит</p>
+                <p className="text-xl font-semibold">
+                  {creditRating.isEligibleForNewLoan ? "Доступен" : "Недоступен"}
+                </p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-4xl">
+        <CardHeader>
+          <CardTitle>Просроченные платежи по кредиту</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingAnalytics ? (
+            <div className="space-y-3">
+              {Array.from({ length: 4 }).map((_, index) => (
+                <Skeleton key={index} className="h-10 w-full" />
+              ))}
+            </div>
+          ) : !overduePayments || overduePayments.content.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              Просроченных платежей по этому кредиту нет.
+            </p>
+          ) : (
+            <div className="border rounded-md">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Сумма</TableHead>
+                    <TableHead>Дата по плану</TableHead>
+                    <TableHead>Факт</TableHead>
+                    <TableHead>Статус</TableHead>
+                    <TableHead>Штраф</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {overduePayments.content.map((payment) => (
+                    <TableRow key={payment.paymentId}>
+                      <TableCell>
+                        {formatCurrencyByCode(
+                          payment.paymentAmount,
+                          payment.currencyCode
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {formatDate(payment.expectedPaymentDate)}
+                      </TableCell>
+                      <TableCell>{formatDate(payment.actualPaymentDate)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            payment.status === "OVERDUE" ||
+                            payment.status === "SKIPPED"
+                              ? "destructive"
+                              : "outline"
+                          }
+                        >
+                          {PAYMENT_STATUS_LABELS[payment.status]}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {formatCurrencyByCode(
+                          payment.penaltyAmount,
+                          payment.loanCurrencyCode
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
         </CardContent>
       </Card>
 
