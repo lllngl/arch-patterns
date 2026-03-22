@@ -1,6 +1,12 @@
 import { oauthApi } from "../../api/oauthApi";
 import { tokenStorage } from "../../auth/tokenStorage";
-import { createPkceRequest, consumeOAuthState, consumePkceVerifier, peekOAuthState } from "../../oauth/pkce";
+import {
+  createPkceRequest,
+  consumeOAuthState,
+  consumePkceVerifier,
+  peekOAuthState,
+  peekPkceVerifier,
+} from "../../oauth/pkce";
 import { getOAuthAuthorizationEndpoint, getOAuthClientId, getOAuthRedirectUri } from "../../oauth/oauthConfig";
 import type { OAuthTokenRequest } from "../../contracts/oauth";
 import type { UserProfile } from "../../contracts/auth";
@@ -44,9 +50,8 @@ export async function completeOAuthLoginFromCallback(params: OAuthCallbackParams
   if (!expectedState || expectedState !== params.state) {
     throw new Error("Некорректный state (возможная CSRF-атака).");
   }
-  consumeOAuthState();
 
-  const codeVerifier = consumePkceVerifier();
+  const codeVerifier = peekPkceVerifier();
   if (!codeVerifier) {
     throw new Error("Отсутствует PKCE code_verifier.");
   }
@@ -64,7 +69,14 @@ export async function completeOAuthLoginFromCallback(params: OAuthCallbackParams
     clientId,
   };
 
-  const tokens = await oauthApi.exchangeCodeForTokens(request);
-  tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
-  return loadUserProfileForClientApp();
+  try {
+    const tokens = await oauthApi.exchangeCodeForTokens(request);
+    tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
+    return loadUserProfileForClientApp();
+  } finally {
+    // After exchange attempt (or deduped parallel run), clear so retries / React Strict Mode
+    // don’t see a mismatch on the second effect invocation.
+    consumeOAuthState();
+    consumePkceVerifier();
+  }
 }

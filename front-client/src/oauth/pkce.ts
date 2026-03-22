@@ -24,6 +24,11 @@ export async function createPkceRequest(): Promise<{ codeVerifier: string; codeC
   return { codeVerifier, codeChallenge, state };
 }
 
+/** Read verifier without removing (use before token exchange; remove in `consumePkceVerifier` after). */
+export function peekPkceVerifier(): string | null {
+  return sessionStorage.getItem(VERIFIER_KEY);
+}
+
 export function consumePkceVerifier(): string | null {
   const v = sessionStorage.getItem(VERIFIER_KEY);
   sessionStorage.removeItem(VERIFIER_KEY);
