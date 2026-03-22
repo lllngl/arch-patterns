@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { ApiError } from "../../auth/api";
-import { useAuth } from "../../auth/AuthContext";
-import { bankingApi } from "../../banking/api";
-import type { AccountDTO, AccountTransactionDTO } from "../../banking/types";
+import { useAuth } from "../../auth/useAuth";
+import { useAccountsStore } from "../../stores/accountsStore";
+import { useAppSettingsStore } from "../../stores/appSettingsStore";
+import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
+import "../../ui/StatusBanner/StatusBanner.css";
 import "./MainPage.css";
 
 function formatMoney(value: number): string {
@@ -34,159 +35,108 @@ function parsePositiveNumber(raw: string): number | null {
 
 export const MainPage = () => {
   const { user } = useAuth();
-  const [accounts, setAccounts] = useState<AccountDTO[]>([]);
-  const [transactions, setTransactions] = useState<AccountTransactionDTO[]>([]);
-  const [selectedAccountId, setSelectedAccountId] = useState("");
+  const accounts = useAccountsStore((s) => s.accounts);
+  const selectedAccountId = useAccountsStore((s) => s.selectedAccountId);
+  const selectAccount = useAccountsStore((s) => s.selectAccount);
+  const transactions = useAccountsStore((s) => s.transactions);
+  const isLoading = useAccountsStore((s) => s.isLoading);
+  const isSubmitting = useAccountsStore((s) => s.isSubmitting);
+  const lastError = useAccountsStore((s) => s.lastError);
+  const loadAccounts = useAccountsStore((s) => s.loadAccounts);
+  const loadTransactions = useAccountsStore((s) => s.loadTransactions);
+  const subscribeTransactionsChannel = useAccountsStore((s) => s.subscribeTransactionsChannel);
+  const unsubscribeTransactionsChannel = useAccountsStore((s) => s.unsubscribeTransactionsChannel);
+  const createAccount = useAccountsStore((s) => s.createAccount);
+  const closeAccount = useAccountsStore((s) => s.closeAccount);
+  const deposit = useAccountsStore((s) => s.deposit);
+  const withdraw = useAccountsStore((s) => s.withdraw);
+  const transfer = useAccountsStore((s) => s.transfer);
+  const clearError = useAccountsStore((s) => s.clearError);
+
+  const hiddenAccountIds = useAppSettingsStore((s) => s.hiddenAccountIds);
+  const toggleHiddenAccount = useAppSettingsStore((s) => s.toggleHiddenAccount);
+
   const [newAccountName, setNewAccountName] = useState("");
   const [moneyAmount, setMoneyAmount] = useState("100");
   const [isAccountPickerOpen, setIsAccountPickerOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [transferToId, setTransferToId] = useState("");
+  const [transferAmount, setTransferAmount] = useState("");
 
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? null,
     [accounts, selectedAccountId]
   );
 
-  const showError = (err: unknown, fallback: string) => {
-    if (err instanceof ApiError) {
-      setError(err.message || fallback);
-    } else {
-      setError(fallback);
-    }
-  };
-
-  const loadAccounts = async (userId: string) => {
-    const page = await bankingApi.getUserAccounts(userId);
-    const loadedAccounts = page.content;
-    setAccounts(loadedAccounts);
-
-    if (loadedAccounts.length === 0) {
-      setSelectedAccountId("");
+  useEffect(() => {
+    if (!user?.id) {
       return;
     }
+    void loadAccounts(user.id);
+  }, [user?.id, loadAccounts]);
 
-    if (!loadedAccounts.some((account) => account.id === selectedAccountId)) {
-      setSelectedAccountId(loadedAccounts[0].id);
+  useEffect(() => {
+    if (!selectedAccountId) {
+      return;
     }
-  };
-
-  const loadTransactions = async (accountId: string) => {
-    const page = await bankingApi.getTransactions(accountId, { size: 20, sortBy: "createdAt", sortDir: "DESC" });
-    setTransactions(page.content);
-  };
-
-  useEffect(() => {
-    const bootstrap = async () => {
-      if (!user?.id) {
-        return;
-      }
-
-      setError(null);
-      setIsLoading(true);
-      try {
-        await loadAccounts(user.id);
-      } catch (err) {
-        showError(err, "Не удалось загрузить банковские данные.");
-      } finally {
-        setIsLoading(false);
-      }
+    void loadTransactions(selectedAccountId);
+    subscribeTransactionsChannel(selectedAccountId);
+    return () => {
+      unsubscribeTransactionsChannel();
     };
-
-    void bootstrap();
-  }, [user?.id]);
-
-  useEffect(() => {
-    const load = async () => {
-      if (!selectedAccountId) {
-        setTransactions([]);
-        return;
-      }
-
-      try {
-        await loadTransactions(selectedAccountId);
-      } catch (err) {
-        showError(err, "Не удалось загрузить историю операций.");
-      }
-    };
-
-    void load();
-  }, [selectedAccountId]);
-
-  const clearMessages = () => {
-    setError(null);
-    setSuccess(null);
-  };
+  }, [selectedAccountId, loadTransactions, subscribeTransactionsChannel, unsubscribeTransactionsChannel]);
 
   const handleCreateAccount = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user?.id) {
       return;
     }
-
-    clearMessages();
-    setIsSubmitting(true);
-    try {
-      const name = newAccountName.trim() || "Мой счет";
-      const account = await bankingApi.createAccount(user.id, name);
-      setNewAccountName("");
-      setSuccess("Счет успешно открыт.");
-      await loadAccounts(user.id);
-      setSelectedAccountId(account.id);
-    } catch (err) {
-      showError(err, "Не удалось открыть счет.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    clearError();
+    const name = newAccountName.trim() || "Мой счет";
+    await createAccount(user.id, name);
+    setNewAccountName("");
   };
 
   const handleCloseAccount = async (accountId: string) => {
     if (!user?.id) {
       return;
     }
-
-    clearMessages();
-    setIsSubmitting(true);
-    try {
-      await bankingApi.closeAccount(accountId);
-      setSuccess("Счет закрыт.");
-      await loadAccounts(user.id);
-    } catch (err) {
-      showError(err, "Не удалось закрыть счет. Возможно, на нем есть баланс.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    clearError();
+    await closeAccount(user.id, accountId);
   };
 
   const handleMoneyOperation = async (kind: "deposit" | "withdraw") => {
     if (!user?.id || !selectedAccountId) {
       return;
     }
-
     const amount = parsePositiveNumber(moneyAmount);
     if (!amount) {
-      setError("Введите корректную сумму операции.");
       return;
     }
-
-    clearMessages();
-    setIsSubmitting(true);
-    try {
-      if (kind === "deposit") {
-        await bankingApi.deposit(selectedAccountId, amount);
-        setSuccess("Деньги успешно зачислены.");
-      } else {
-        await bankingApi.withdraw(selectedAccountId, amount);
-        setSuccess("Деньги успешно сняты.");
-      }
-      await Promise.all([loadAccounts(user.id), loadTransactions(selectedAccountId)]);
-    } catch (err) {
-      showError(err, "Не удалось выполнить операцию по счету.");
-    } finally {
-      setIsSubmitting(false);
+    clearError();
+    if (kind === "deposit") {
+      await deposit(user.id, selectedAccountId, amount);
+    } else {
+      await withdraw(user.id, selectedAccountId, amount);
     }
+  };
+
+  const handleTransfer = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!user?.id || !selectedAccountId) {
+      return;
+    }
+    const amount = parsePositiveNumber(transferAmount);
+    const toId = transferToId.trim();
+    if (!amount || !toId) {
+      return;
+    }
+    clearError();
+    await transfer(user.id, {
+      fromAccountId: selectedAccountId,
+      toAccountId: toId,
+      amount,
+    });
+    setTransferAmount("");
   };
 
   return (
@@ -194,14 +144,13 @@ export const MainPage = () => {
       <h1 className="main-page-title">Клиентский кабинет</h1>
       <p className="main-page-subtitle">Счета и операции</p>
 
-      {isLoading && <div className="banner banner-info">Загрузка данных...</div>}
-      {error && <div className="banner banner-error">{error}</div>}
-      {success && <div className="banner banner-success">{success}</div>}
+      {isLoading && <StatusBanner tone="info" message="Загрузка данных..." />}
+      {lastError && <StatusBanner tone="error" message={lastError} />}
 
       <div className="grid-two">
         <article className="card">
           <h2 className="card-title">Открыть новый счет</h2>
-          <form className="inline-form" onSubmit={handleCreateAccount}>
+          <form className="inline-form" onSubmit={(e) => void handleCreateAccount(e)}>
             <input
               className="field"
               placeholder="Название счета (опционально)"
@@ -237,6 +186,13 @@ export const MainPage = () => {
                 >
                   {isAccountPickerOpen ? "Скрыть выбор счета" : "Выбрать другой счет"}
                 </button>
+                <button
+                  type="button"
+                  className="button button-secondary"
+                  onClick={() => void toggleHiddenAccount(selectedAccount.id)}
+                >
+                  {hiddenAccountIds.includes(selectedAccount.id) ? "Показать в списках" : "Скрыть счёт"}
+                </button>
                 {selectedAccount.status === "OPEN" && (
                   <button
                     className="button button-danger"
@@ -257,11 +213,14 @@ export const MainPage = () => {
                       type="button"
                       className={`account-picker-item${account.id === selectedAccountId ? " account-picker-item-active" : ""}`}
                       onClick={() => {
-                        setSelectedAccountId(account.id);
+                        selectAccount(account.id);
                         setIsAccountPickerOpen(false);
                       }}
                     >
-                      <span className="account-name">{account.name || "Без названия"}</span>
+                      <span className="account-name">
+                        {account.name || "Без названия"}
+                        {hiddenAccountIds.includes(account.id) ? " · скрыт" : ""}
+                      </span>
                       <span className="account-balance">{formatMoney(account.balance)}</span>
                       <span className={`badge ${account.status === "OPEN" ? "badge-open" : "badge-closed"}`}>
                         {account.status}
@@ -311,6 +270,38 @@ export const MainPage = () => {
                   Снять
                 </button>
               </div>
+
+              <h3 className="card-subtitle">Перевод на другой счёт</h3>
+              <p className="muted small-print">
+                Укажите UUID счёта получателя (свой или чужой). Требуется эндпоинт на бэке и{" "}
+                <code>VITE_TRANSFER_ENDPOINT</code>.
+              </p>
+              <form className="stack" onSubmit={(e) => void handleTransfer(e)}>
+                <div className="inline-form">
+                  <input
+                    className="field"
+                    value={transferToId}
+                    onChange={(e) => setTransferToId(e.target.value)}
+                    placeholder="Счёт получателя (id)"
+                    disabled={isSubmitting || selectedAccount.status !== "OPEN"}
+                  />
+                  <input
+                    className="field"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                    placeholder="Сумма"
+                    disabled={isSubmitting || selectedAccount.status !== "OPEN"}
+                  />
+                  <button
+                    className="button button-secondary"
+                    type="submit"
+                    disabled={isSubmitting || selectedAccount.status !== "OPEN"}
+                  >
+                    Перевести
+                  </button>
+                </div>
+              </form>
+
               {selectedAccount.status !== "OPEN" && (
                 <p className="muted">Для закрытого счета операции пополнения/снятия недоступны.</p>
               )}

@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState, type FormEvent, type UIEvent } from "react";
-import { ApiError } from "../../auth/api";
-import { useAuth } from "../../auth/AuthContext";
-import { bankingApi } from "../../banking/api";
-import type { AccountDTO, LoanResponse, LoanStatus, Page, TariffResponse } from "../../banking/types";
+import { useAuth } from "../../auth/useAuth";
+import { useLoansStore } from "../../stores/loansStore";
+import type { LoanStatus } from "../../contracts/banking";
+import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
+import "../../ui/StatusBanner/StatusBanner.css";
 import "./LoansPage.css";
 
 function formatMoney(value: number): string {
@@ -42,34 +43,39 @@ const LOAN_STATUS_OPTIONS: Array<{ value: "" | LoanStatus; label: string }> = [
 
 export const LoansPage = () => {
   const { user } = useAuth();
-  const [openAccounts, setOpenAccounts] = useState<AccountDTO[]>([]);
-  const [tariffs, setTariffs] = useState<TariffResponse[]>([]);
+  const openAccounts = useLoansStore((s) => s.openAccounts);
+  const tariffs = useLoansStore((s) => s.tariffs);
+  const tariffPage = useLoansStore((s) => s.tariffPage);
+  const hasMoreTariffs = useLoansStore((s) => s.hasMoreTariffs);
+  const isTariffsLoading = useLoansStore((s) => s.isTariffsLoading);
+  const activeLoanOptions = useLoansStore((s) => s.activeLoanOptions);
+  const activeLoanPage = useLoansStore((s) => s.activeLoanPage);
+  const hasMoreActiveLoans = useLoansStore((s) => s.hasMoreActiveLoans);
+  const isActiveLoansLoading = useLoansStore((s) => s.isActiveLoansLoading);
+  const loanListPage = useLoansStore((s) => s.loanListPage);
+  const loanTablePageIndex = useLoansStore((s) => s.loanTablePageIndex);
+  const loanStatusFilter = useLoansStore((s) => s.loanStatusFilter);
+  const isLoading = useLoansStore((s) => s.isLoading);
+  const isSubmitting = useLoansStore((s) => s.isSubmitting);
+  const lastError = useLoansStore((s) => s.lastError);
+  const bootstrap = useLoansStore((s) => s.bootstrap);
+  const loadTariffsPage = useLoansStore((s) => s.loadTariffsPage);
+  const loadActiveLoansPage = useLoansStore((s) => s.loadActiveLoansPage);
+  const setLoanStatusFilter = useLoansStore((s) => s.setLoanStatusFilter);
+  const changeLoanTablePage = useLoansStore((s) => s.changeLoanTablePage);
+  const createLoan = useLoansStore((s) => s.createLoan);
+  const repayLoan = useLoansStore((s) => s.repayLoan);
+  const clearError = useLoansStore((s) => s.clearError);
+
   const [loanAmount, setLoanAmount] = useState("");
   const [loanTermMonths, setLoanTermMonths] = useState("");
   const [loanTariffId, setLoanTariffId] = useState("");
   const [loanAccountId, setLoanAccountId] = useState("");
   const [isTariffPickerOpen, setIsTariffPickerOpen] = useState(false);
-  const [tariffPage, setTariffPage] = useState(0);
-  const [hasMoreTariffs, setHasMoreTariffs] = useState(true);
-  const [isTariffsLoading, setIsTariffsLoading] = useState(false);
-
-  const [activeLoanOptions, setActiveLoanOptions] = useState<LoanResponse[]>([]);
-  const [activeLoanPage, setActiveLoanPage] = useState(0);
-  const [hasMoreActiveLoans, setHasMoreActiveLoans] = useState(true);
-  const [isActiveLoansLoading, setIsActiveLoansLoading] = useState(false);
   const [isLoanPickerOpen, setIsLoanPickerOpen] = useState(false);
   const [repayLoanId, setRepayLoanId] = useState("");
   const [repayAccountId, setRepayAccountId] = useState("");
   const [repayAmount, setRepayAmount] = useState("");
-
-  const [loanStatusFilter, setLoanStatusFilter] = useState<"" | LoanStatus>("");
-  const [loanPage, setLoanPage] = useState(0);
-  const [loanListPage, setLoanListPage] = useState<Page<LoanResponse> | null>(null);
-
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const selectedTariff = useMemo(
     () => tariffs.find((tariff) => tariff.id === loanTariffId) ?? null,
@@ -97,113 +103,33 @@ export const LoansPage = () => {
     }
   };
 
-  const showError = (err: unknown, fallback: string) => {
-    if (err instanceof ApiError) {
-      setError(err.message || fallback);
-    } else {
-      setError(fallback);
+  useEffect(() => {
+    if (!user?.id) {
+      return;
     }
-  };
-
-  const loadOpenAccounts = async (userId: string) => {
-    const page = await bankingApi.getUserAccounts(userId, { size: 100, sortBy: "createdAt", sortDir: "DESC" });
-    const accounts = page.content.filter((account) => account.status === "OPEN");
-    setOpenAccounts(accounts);
-
-    if (!accounts.some((account) => account.id === loanAccountId)) {
-      setLoanAccountId(accounts[0]?.id ?? "");
-    }
-    if (!accounts.some((account) => account.id === repayAccountId)) {
-      setRepayAccountId(accounts[0]?.id ?? "");
-    }
-  };
-
-  const loadTariffsPage = async (pageIndex: number, append: boolean) => {
-    setIsTariffsLoading(true);
-    try {
-      const page = await bankingApi.getTariffs({ page: pageIndex, size: 20, sortBy: "name", sortDir: "ASC" });
-      setTariffs((prev) => (append ? [...prev, ...page.content] : page.content));
-      setTariffPage(page.number);
-      setHasMoreTariffs(page.number + 1 < page.totalPages);
-
-      if (!loanTariffId && page.content.length > 0) {
-        setLoanTariffId(page.content[0].id);
-      }
-    } finally {
-      setIsTariffsLoading(false);
-    }
-  };
-
-  const loadActiveLoansPage = async (pageIndex: number, append: boolean) => {
-    setIsActiveLoansLoading(true);
-    try {
-      const page = await bankingApi.getMyLoans(
-        { page: pageIndex, size: 20, sortBy: "createdAt", sortDir: "DESC" },
-        "ACTIVE"
-      );
-      setActiveLoanOptions((prev) => (append ? [...prev, ...page.content] : page.content));
-      setActiveLoanPage(page.number);
-      setHasMoreActiveLoans(page.number + 1 < page.totalPages);
-
-      if (!page.content.some((loan) => loan.id === repayLoanId) && page.content.length > 0 && !append) {
-        setRepayLoanId(page.content[0].id);
-      }
-    } finally {
-      setIsActiveLoansLoading(false);
-    }
-  };
-
-  const loadLoanTablePage = async (pageIndex: number, status: "" | LoanStatus) => {
-    const page = await bankingApi.getMyLoans(
-      { page: pageIndex, size: 10, sortBy: "createdAt", sortDir: "DESC" },
-      status || undefined
-    );
-    setLoanListPage(page);
-    setLoanPage(page.number);
-  };
+    void bootstrap(user.id);
+  }, [user?.id, bootstrap]);
 
   useEffect(() => {
-    const bootstrap = async () => {
-      if (!user?.id) {
-        return;
-      }
-      setIsLoading(true);
-      setError(null);
-      try {
-        await Promise.all([loadOpenAccounts(user.id), loadTariffsPage(0, false), loadActiveLoansPage(0, false), loadLoanTablePage(0, "")]);
-      } catch (err) {
-        showError(err, "Не удалось загрузить данные по кредитам.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void bootstrap();
-  }, [user?.id]);
+    if (!openAccounts.some((a) => a.id === loanAccountId)) {
+      setLoanAccountId(openAccounts[0]?.id ?? "");
+    }
+    if (!openAccounts.some((a) => a.id === repayAccountId)) {
+      setRepayAccountId(openAccounts[0]?.id ?? "");
+    }
+  }, [openAccounts, loanAccountId, repayAccountId]);
 
   useEffect(() => {
-    const loadByFilter = async () => {
-      if (!user?.id) {
-        return;
-      }
-      setIsLoading(true);
-      setError(null);
-      try {
-        await loadLoanTablePage(0, loanStatusFilter);
-      } catch (err) {
-        showError(err, "Не удалось применить фильтр кредитов.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (tariffs.length > 0 && !loanTariffId) {
+      setLoanTariffId(tariffs[0].id);
+    }
+  }, [tariffs, loanTariffId]);
 
-    void loadByFilter();
-  }, [loanStatusFilter]);
-
-  const clearMessages = () => {
-    setError(null);
-    setSuccess(null);
-  };
+  useEffect(() => {
+    if (activeLoanOptions.length > 0 && !activeLoanOptions.some((l) => l.id === repayLoanId)) {
+      setRepayLoanId(activeLoanOptions[0].id);
+    }
+  }, [activeLoanOptions, repayLoanId]);
 
   const handleTariffDropdownScroll = (event: UIEvent<HTMLDivElement>) => {
     const container = event.currentTarget;
@@ -226,35 +152,20 @@ export const LoansPage = () => {
     if (!user?.id) {
       return;
     }
-
     const amount = parsePositiveNumber(loanAmount);
     const termMonths = Number(loanTermMonths);
-
     if (!loanAccountId || !loanTariffId || !amount || !Number.isInteger(termMonths) || termMonths <= 0) {
-      setError("Заполните корректно поля кредита: счет, тариф, сумма, срок.");
       return;
     }
-
-    clearMessages();
-    setIsSubmitting(true);
-    try {
-      await bankingApi.createLoan({
-        userId: user.id,
-        accountId: loanAccountId,
-        amount,
-        termMonths,
-        tariffId: loanTariffId,
-        paymentType: "ANNUITY",
-      });
-      setLoanAmount("");
-      setLoanTermMonths("");
-      setSuccess("Заявка на кредит создана.");
-      await Promise.all([loadLoanTablePage(loanPage, loanStatusFilter), loadActiveLoansPage(0, false)]);
-    } catch (err) {
-      showError(err, "Не удалось оформить кредит.");
-    } finally {
-      setIsSubmitting(false);
-    }
+    clearError();
+    await createLoan(user.id, {
+      accountId: loanAccountId,
+      tariffId: loanTariffId,
+      amount,
+      termMonths,
+    });
+    setLoanAmount("");
+    setLoanTermMonths("");
   };
 
   const handleRepayLoan = async (event: FormEvent<HTMLFormElement>) => {
@@ -262,45 +173,17 @@ export const LoansPage = () => {
     if (!user?.id) {
       return;
     }
-
     const amount = parsePositiveNumber(repayAmount);
     if (!repayLoanId || !repayAccountId || !amount) {
-      setError("Заполните корректно поля погашения кредита.");
       return;
     }
-
-    clearMessages();
-    setIsSubmitting(true);
-    try {
-      await bankingApi.repayLoan(repayLoanId, {
-        userId: user.id,
-        accountId: repayAccountId,
-        amount,
-      });
-      setRepayAmount("");
-      setSuccess("Погашение кредита успешно выполнено.");
-      await Promise.all([loadLoanTablePage(loanPage, loanStatusFilter), loadActiveLoansPage(0, false), loadOpenAccounts(user.id)]);
-    } catch (err) {
-      showError(err, "Не удалось погасить кредит.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleChangeLoanPage = async (nextPage: number) => {
-    if (nextPage < 0 || !loanListPage || nextPage >= loanListPage.totalPages) {
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-    try {
-      await loadLoanTablePage(nextPage, loanStatusFilter);
-    } catch (err) {
-      showError(err, "Не удалось переключить страницу кредитов.");
-    } finally {
-      setIsLoading(false);
-    }
+    clearError();
+    await repayLoan(user.id, {
+      loanId: repayLoanId,
+      accountId: repayAccountId,
+      amount,
+    });
+    setRepayAmount("");
   };
 
   return (
@@ -309,13 +192,12 @@ export const LoansPage = () => {
       <p className="loans-page-subtitle">Оформление, погашение и список кредитов</p>
 
       {isLoading && <div className="loans-banner loans-banner-info">Загрузка данных...</div>}
-      {error && <div className="loans-banner loans-banner-error">{error}</div>}
-      {success && <div className="loans-banner loans-banner-success">{success}</div>}
+      {lastError && <StatusBanner tone="error" message={lastError} />}
 
       <div className="loans-grid">
         <article className="loans-card">
           <h2 className="loans-card-title">Взять кредит</h2>
-          <form className="loans-stack" onSubmit={handleCreateLoan}>
+          <form className="loans-stack" onSubmit={(e) => void handleCreateLoan(e)}>
             <select
               className="loans-field"
               value={loanAccountId}
@@ -387,7 +269,7 @@ export const LoansPage = () => {
 
         <article className="loans-card">
           <h2 className="loans-card-title">Погасить кредит</h2>
-          <form className="loans-stack" onSubmit={handleRepayLoan}>
+          <form className="loans-stack" onSubmit={(e) => void handleRepayLoan(e)}>
             <div className="loans-select">
               <button
                 type="button"
@@ -459,7 +341,7 @@ export const LoansPage = () => {
           <select
             className="loans-filter-select"
             value={loanStatusFilter}
-            onChange={(event) => setLoanStatusFilter(event.target.value as "" | LoanStatus)}
+            onChange={(event) => void setLoanStatusFilter(event.target.value as "" | LoanStatus)}
           >
             {LOAN_STATUS_OPTIONS.map((option) => (
               <option key={option.label} value={option.value}>
@@ -506,18 +388,18 @@ export const LoansPage = () => {
               <button
                 type="button"
                 className="loans-button loans-button-outline"
-                onClick={() => void handleChangeLoanPage(loanPage - 1)}
+                onClick={() => void changeLoanTablePage(loanTablePageIndex - 1)}
                 disabled={loanListPage.first || isLoading}
               >
                 Назад
               </button>
               <span className="loans-pagination-info">
-                Страница {loanPage + 1} из {loanListPage.totalPages}
+                Страница {loanTablePageIndex + 1} из {loanListPage.totalPages}
               </span>
               <button
                 type="button"
                 className="loans-button loans-button-outline"
-                onClick={() => void handleChangeLoanPage(loanPage + 1)}
+                onClick={() => void changeLoanTablePage(loanTablePageIndex + 1)}
                 disabled={loanListPage.last || isLoading}
               >
                 Вперед

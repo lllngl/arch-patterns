@@ -4,6 +4,16 @@
   gap: 16px;
 }
 
+.card-subtitle {
+  margin: 12px 0 4px;
+  font-size: 1rem;
+}
+
+.small-print {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .main-page-title {
   margin: 0;
   font-size: 30px;

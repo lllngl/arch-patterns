@@ -8,6 +8,21 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --page-bg: #f3f4f6;
+  --toast-bg: #ffffff;
+  --toast-fg: #111827;
+}
+
+html[data-theme="dark"] {
+  color: #e5e7eb;
+  background-color: #0f172a;
+  --page-bg: #0f172a;
+  --toast-bg: #1e293b;
+  --toast-fg: #e5e7eb;
+}
+
+html[data-theme="dark"] body {
+  background-color: #0f172a;
 }
 
 *,

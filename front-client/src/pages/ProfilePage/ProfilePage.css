@@ -5,6 +5,40 @@
   padding: 24px;
 }
 
+.profile-section-title {
+  margin-top: 2rem;
+  font-size: 1.15rem;
+}
+
+.profile-subtitle {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.profile-credit-block {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.profile-overdue-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.profile-rating {
+  margin: 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.profile-muted {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
 .profile-page-title {
   margin: 0;
   font-size: 28px;
