@@ -7,10 +7,13 @@ import { LoginPage } from "./pages/LoginPage/LoginPage";
 import { LoansPage } from "./pages/LoansPage/LoansPage";
 import { MainPage } from "./pages/MainPage/MainPage";
 import { ProfilePage } from "./pages/ProfilePage/ProfilePage";
+import { AuthCallbackPage } from "./pages/AuthCallbackPage/AuthCallbackPage";
+import { RouteErrorFallback } from "./pages/RouteErrorFallback";
 
 export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
+    errorElement: <RouteErrorFallback />,
     children: [
       {
         element: <AppLayout />,
@@ -45,10 +48,15 @@ export const router = createBrowserRouter([
   },
   {
     element: <PublicOnlyRoute />,
+    errorElement: <RouteErrorFallback />,
     children: [
       {
         path: "login",
         element: <LoginPage />,
+      },
+      {
+        path: "auth/callback",
+        element: <AuthCallbackPage />,
       },
     ],
   },

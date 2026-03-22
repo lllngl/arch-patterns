@@ -22,11 +22,13 @@ export default defineConfig([
       react: reactPlugin,
       'react-hooks': reactHooksPlugin,
       'react-refresh': reactRefreshPlugin,
+      '@typescript-eslint': tseslint.plugin,
     },
     settings: { react: { version: 'detect' } },
     rules: {
       'no-unused-vars': 'off',
       '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       'no-console': 'warn',
       'react/react-in-jsx-scope': 'off',
     },

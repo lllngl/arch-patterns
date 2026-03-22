@@ -1,14 +1,49 @@
 .profile-page {
   border-radius: 12px;
-  background-color: #ffffff;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  background-color: var(--color-surface);
+  box-shadow: var(--shadow-card);
   padding: 24px;
+  color: var(--color-fg);
+}
+
+.profile-section-title {
+  margin-top: 2rem;
+  font-size: 1.15rem;
+}
+
+.profile-subtitle {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+}
+
+.profile-credit-block {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 10px;
+  background: rgba(59, 130, 246, 0.06);
+  border: 1px solid rgba(59, 130, 246, 0.15);
+}
+
+.profile-overdue-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.profile-rating {
+  margin: 0.25rem 0;
+  font-size: 1.1rem;
+}
+
+.profile-muted {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-muted);
 }
 
 .profile-page-title {
   margin: 0;
   font-size: 28px;
-  color: #111827;
+  color: var(--color-fg);
 }
 
 .profile-grid {
@@ -19,7 +54,7 @@
 }
 
 .profile-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 12px;
   display: flex;
@@ -28,12 +63,12 @@
 }
 
 .profile-label {
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 13px;
 }
 
 .profile-value {
-  color: #111827;
+  color: var(--color-fg);
   font-size: 15px;
   font-weight: 600;
 }

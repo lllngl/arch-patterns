@@ -1,39 +1,21 @@
-import { useState, type FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuth } from "../../auth/AuthContext";
-import { ApiError } from "../../auth/api";
+import { useState } from "react";
+import { buildAuthorizationRedirectUrl } from "../../use-cases/auth/oauthLoginUseCase";
+import { clearOAuthCallbackCache } from "../../use-cases/auth/oauthCallbackDedup";
 import "./LoginPage.css";
 
-interface LoginLocationState {
-  from?: string;
-}
-
 export const LoginPage = () => {
-  const { login } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const from = (location.state as LoginLocationState | null)?.from ?? "/";
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleOAuthLogin = async () => {
     setIsLoading(true);
     setError(null);
-
     try {
-      await login(email, password);
-      navigate(from, { replace: true });
+      clearOAuthCallbackCache();
+      const url = await buildAuthorizationRedirectUrl();
+      window.location.assign(url);
     } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
-        setError("Доступ в клиентское приложение разрешен только роли CLIENT.");
-      } else {
-        setError("Неверный логин или пароль.");
-      }
-    } finally {
+      setError(err instanceof Error ? err.message : "Не удалось перейти к сервису аутентификации.");
       setIsLoading(false);
     }
   };
@@ -44,49 +26,18 @@ export const LoginPage = () => {
         <div className="login-card">
           <div className="login-header">
             <h1 className="login-title">Вход в банк</h1>
-            <p className="login-subtitle">Авторизуйтесь для доступа к счетам и кредитам</p>
+            <p className="login-subtitle">
+              Пароль вводится только на странице единого сервиса аутентификации (OAuth 2.0 / OpenID Connect).
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="login-form" noValidate>
-            {error && <div className="form-error">{error}</div>}
+          {error && <div className="form-error">{error}</div>}
 
-            <div className="form-group">
-              <label htmlFor="email" className="form-label">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="name@example.com"
-                className="form-input"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="password" className="form-label">
-                Пароль
-              </label>
-              <input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                className="form-input"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-                required
-                disabled={isLoading}
-                minLength={6}
-              />
-            </div>
-
-            <button type="submit" className="btn btn-primary btn-full" disabled={isLoading}>
-              {isLoading ? "Выполняется вход..." : "Войти"}
+          <div className="login-oauth-block">
+            <button type="button" className="btn btn-primary btn-full" disabled={isLoading} onClick={() => void handleOAuthLogin()}>
+              {isLoading ? "Переход..." : "Войти через единый сервис"}
             </button>
-          </form>
+          </div>
         </div>
 
         <div className="login-footer">

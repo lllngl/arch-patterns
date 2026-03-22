@@ -4,35 +4,49 @@
   gap: 16px;
 }
 
+.card-subtitle {
+  margin: 12px 0 4px;
+  font-size: 1rem;
+}
+
+.small-print {
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
 .main-page-title {
   margin: 0;
   font-size: 30px;
-  color: #111827;
+  color: var(--color-fg);
 }
 
 .main-page-subtitle {
   margin: 0;
-  color: #4b5563;
+  color: var(--color-fg-secondary);
 }
 
 .banner {
   border-radius: 10px;
   padding: 10px 12px;
+  border: 1px solid transparent;
 }
 
 .banner-info {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: var(--banner-info-bg);
+  color: var(--banner-info-fg);
+  border-color: var(--banner-info-border);
 }
 
 .banner-error {
-  background-color: #fef2f2;
-  color: #b91c1c;
+  background-color: var(--banner-error-bg);
+  color: var(--banner-error-fg);
+  border-color: var(--banner-error-border);
 }
 
 .banner-success {
-  background-color: #ecfdf5;
-  color: #047857;
+  background-color: var(--banner-success-bg);
+  color: var(--banner-success-fg);
+  border-color: var(--banner-success-border);
 }
 
 .grid-two {
@@ -42,20 +56,22 @@
 }
 
 .card {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
   padding: 16px;
+  color: var(--color-fg);
 }
 
 .card-title {
   margin: 0 0 12px;
   font-size: 20px;
+  color: var(--color-fg);
 }
 
 .muted {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .inline-form {
@@ -72,16 +88,22 @@
 
 .field {
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
   padding: 9px 11px;
   font-size: 14px;
+  background-color: var(--color-surface);
+  color: var(--color-fg);
 }
 
 .field:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+html[data-theme="dark"] .field:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .tariff-select {
@@ -91,8 +113,8 @@
 .tariff-trigger {
   text-align: left;
   justify-content: flex-start;
-  color: #111827;
-  background-color: #ffffff;
+  color: var(--color-fg);
+  background-color: var(--color-surface);
 }
 
 .tariff-dropdown {
@@ -100,46 +122,51 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   max-height: 220px;
   overflow-y: auto;
   z-index: 20;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .tariff-option {
   width: 100%;
   border: none;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
   text-align: left;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   cursor: pointer;
+  color: var(--color-fg);
 }
 
 .tariff-option:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-surface-subtle);
 }
 
 .tariff-option-active {
-  background-color: #eff6ff;
+  background-color: rgba(37, 99, 235, 0.12);
+}
+
+html[data-theme="dark"] .tariff-option-active {
+  background-color: rgba(59, 130, 246, 0.22);
 }
 
 .tariff-option-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .tariff-dropdown-state {
   margin: 0;
   padding: 10px 12px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .loan-select {
@@ -149,8 +176,8 @@
 .loan-trigger {
   text-align: left;
   justify-content: flex-start;
-  color: #111827;
-  background-color: #ffffff;
+  color: var(--color-fg);
+  background-color: var(--color-surface);
 }
 
 .loan-dropdown {
@@ -158,46 +185,51 @@
   top: calc(100% + 6px);
   left: 0;
   right: 0;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   max-height: 220px;
   overflow-y: auto;
   z-index: 20;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-card);
 }
 
 .loan-option {
   width: 100%;
   border: none;
-  border-bottom: 1px solid #f1f5f9;
-  background: #ffffff;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-surface);
   text-align: left;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 4px;
   cursor: pointer;
+  color: var(--color-fg);
 }
 
 .loan-option:hover {
-  background-color: #f8fafc;
+  background-color: var(--color-surface-subtle);
 }
 
 .loan-option-active {
-  background-color: #eff6ff;
+  background-color: rgba(37, 99, 235, 0.12);
+}
+
+html[data-theme="dark"] .loan-option-active {
+  background-color: rgba(59, 130, 246, 0.22);
 }
 
 .loan-option-meta {
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .loan-dropdown-state {
   margin: 0;
   padding: 10px 12px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .button {
@@ -218,13 +250,18 @@
 }
 
 .button-primary {
-  background-color: #2563eb;
+  background-color: var(--color-accent);
   color: #ffffff;
 }
 
 .button-secondary {
   background-color: #6b7280;
   color: #ffffff;
+}
+
+html[data-theme="dark"] .button-secondary {
+  background-color: #475569;
+  color: #f1f5f9;
 }
 
 .button-danger {
@@ -238,7 +275,7 @@
 }
 
 .current-account-card {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 12px;
   display: flex;
@@ -252,13 +289,53 @@
   margin: 0;
   font-size: 16px;
   font-weight: 700;
+  color: var(--color-fg);
 }
 
 .current-account-balance {
   margin: 0;
   font-size: 20px;
-  color: #111827;
+  color: var(--color-fg);
   font-weight: 700;
+}
+
+.account-id-block {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--color-border);
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.account-id-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.account-id-copy-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-id-value {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  padding: 6px 8px;
+  font-size: 12px;
+  line-height: 1.35;
+  word-break: break-all;
+  background: var(--color-code-bg);
+  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  color: var(--color-fg);
 }
 
 .account-actions-row {
@@ -268,9 +345,9 @@
 }
 
 .account-picker-panel {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
-  background-color: #f9fafb;
+  background-color: var(--color-surface-subtle);
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -278,9 +355,9 @@
 }
 
 .account-picker-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   padding: 8px;
   display: flex;
   flex-direction: column;
@@ -288,11 +365,16 @@
   gap: 2px;
   text-align: left;
   cursor: pointer;
+  color: var(--color-fg);
 }
 
 .account-picker-item-active {
-  border-color: #2563eb;
-  background-color: #eff6ff;
+  border-color: var(--color-accent);
+  background-color: rgba(37, 99, 235, 0.1);
+}
+
+html[data-theme="dark"] .account-picker-item-active {
+  background-color: rgba(59, 130, 246, 0.18);
 }
 
 .account-name {
@@ -301,7 +383,7 @@
 
 .account-balance {
   font-size: 14px;
-  color: #1f2937;
+  color: var(--color-fg);
 }
 
 .badge {
@@ -325,9 +407,10 @@
 .selected-account {
   display: flex;
   justify-content: space-between;
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 10px;
+  color: var(--color-fg);
 }
 
 .history-header {
@@ -363,12 +446,13 @@
 }
 
 .transaction-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 8px;
   padding: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  background-color: var(--color-surface);
 }
 
 .transaction-type {
@@ -378,7 +462,7 @@
 
 .transaction-date {
   margin: 4px 0 0;
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 12px;
 }
 
@@ -405,14 +489,15 @@
 
 .loan-table th,
 .loan-table td {
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid var(--color-border);
   text-align: left;
   padding: 8px;
   font-size: 13px;
+  color: var(--color-fg);
 }
 
 .loan-table th {
-  color: #374151;
+  color: var(--color-fg-secondary);
   font-weight: 700;
 }
 
