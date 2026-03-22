@@ -14,28 +14,29 @@
 .history-page-title {
   margin: 0;
   font-size: 28px;
-  color: #111827;
+  color: var(--color-fg);
 }
 
 .history-page-subtitle {
   margin: 6px 0 0;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .history-back-link {
   text-decoration: none;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
   padding: 8px 12px;
-  color: #111827;
-  background-color: #ffffff;
+  color: var(--color-fg);
+  background-color: var(--color-surface);
 }
 
 .history-card {
-  background-color: #ffffff;
+  background-color: var(--color-surface);
   border-radius: 12px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-card);
   padding: 16px;
+  color: var(--color-fg);
 }
 
 .history-label {
@@ -46,15 +47,17 @@
 
 .history-select {
   width: 100%;
-  border: 1px solid #d1d5db;
+  border: 1px solid var(--color-input-border);
   border-radius: 8px;
   padding: 9px 11px;
   font-size: 14px;
+  background-color: var(--color-surface);
+  color: var(--color-fg);
 }
 
 .history-select:focus {
   outline: none;
-  border-color: #2563eb;
+  border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
 }
 
@@ -75,7 +78,7 @@
 
 .history-muted {
   margin: 0;
-  color: #6b7280;
+  color: var(--color-muted);
 }
 
 .history-list {
@@ -88,13 +91,14 @@
 }
 
 .history-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+  background-color: var(--color-surface);
 }
 
 .history-type {
@@ -105,7 +109,7 @@
 .history-date,
 .history-description {
   margin: 3px 0 0;
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 12px;
 }
 

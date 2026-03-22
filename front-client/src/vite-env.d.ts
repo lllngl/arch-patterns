@@ -8,8 +8,6 @@ interface ImportMetaEnv {
   readonly VITE_OAUTH_STUB?: string;
   readonly VITE_ACCOUNT_WS_BROKER_URL?: string;
   readonly VITE_APP_SETTINGS_DISABLED?: string;
-  readonly VITE_CREDIT_OVERDUE_ENDPOINT?: string;
-  readonly VITE_CREDIT_RATING_ENDPOINT?: string;
 }
 
 interface ImportMeta {

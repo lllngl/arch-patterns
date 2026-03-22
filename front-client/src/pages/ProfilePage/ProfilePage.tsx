@@ -1,17 +1,23 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../../auth/useAuth";
 import { creditApi } from "../../api/creditApi";
-import type { CreditRatingDTO, OverduePaymentDTO } from "../../contracts/credit";
+import type { CurrencyCode } from "../../contracts/banking";
+import type { CreditRatingDTO, PaymentHistoryDTO } from "../../contracts/credit";
+import { formatMoney } from "../../utils/money";
+
+function asCurrency(code: string): CurrencyCode {
+  return code === "USD" || code === "EUR" ? code : "RUB";
+}
 import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
 import "../../ui/StatusBanner/StatusBanner.css";
 import "./ProfilePage.css";
 
 export const ProfilePage = () => {
   const { user } = useAuth();
-  const [overdue, setOverdue] = useState<OverduePaymentDTO[] | null>(null);
+  const [overdue, setOverdue] = useState<PaymentHistoryDTO[] | null>(null);
   const [rating, setRating] = useState<CreditRatingDTO | null>(null);
   const [creditLoading, setCreditLoading] = useState(false);
-  const [creditMessage, setCreditMessage] = useState<string | null>(null);
+  const [creditError, setCreditError] = useState<string | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -19,16 +25,18 @@ export const ProfilePage = () => {
         return;
       }
       setCreditLoading(true);
-      setCreditMessage(null);
+      setCreditError(null);
       try {
-        const [o, r] = await Promise.all([creditApi.getOverduePayments(user.id), creditApi.getCreditRating(user.id)]);
-        setOverdue(o);
+        const [payments, r] = await Promise.all([
+          creditApi.getOverduePayments(user.id),
+          creditApi.getCreditRating(),
+        ]);
+        setOverdue(payments);
         setRating(r);
-        if (o.length === 0 && r === null) {
-          setCreditMessage("Просроченных платежей нет. Сведения о кредитном рейтинге пока отсутствуют.");
-        }
       } catch {
-        setCreditMessage("Не удалось загрузить кредитные данные.");
+        setCreditError("Не удалось загрузить кредитные данные.");
+        setOverdue(null);
+        setRating(null);
       } finally {
         setCreditLoading(false);
       }
@@ -54,23 +62,23 @@ export const ProfilePage = () => {
         </div>
         <div className="profile-item">
           <span className="profile-label">Роли</span>
-          <span className="profile-value">
-            {user?.roles?.length ? user.roles.join(", ") : "-"}
-          </span>
+          <span className="profile-value">{user?.roles?.length ? user.roles.join(", ") : "-"}</span>
         </div>
       </div>
 
       <h2 className="profile-section-title">Кредитная информация</h2>
       {creditLoading && <StatusBanner tone="info" message="Загрузка кредитных данных..." />}
-      {creditMessage && !creditLoading && <StatusBanner tone="info" message={creditMessage} />}
+      {creditError && !creditLoading && <StatusBanner tone="error" message={creditError} />}
 
       {overdue && overdue.length > 0 && (
         <div className="profile-credit-block">
           <h3 className="profile-subtitle">Просроченные платежи</h3>
           <ul className="profile-overdue-list">
             {overdue.map((p) => (
-              <li key={`${p.loanId}-${p.dueDate}`}>
-                Кредит {p.loanId.slice(0, 8)}… — {p.amount} {p.currency} до {p.dueDate}
+              <li key={p.paymentId}>
+                Кредит {p.loanId.slice(0, 8)}… — {formatMoney(p.paymentAmount, asCurrency(p.currencyCode))} — срок{" "}
+                {p.expectedPaymentDate}, статус {p.status}
+                {p.penaltyAmount > 0 ? `, пени ${formatMoney(p.penaltyAmount, asCurrency(p.currencyCode))}` : ""}
               </li>
             ))}
           </ul>
@@ -81,9 +89,17 @@ export const ProfilePage = () => {
         <div className="profile-credit-block">
           <h3 className="profile-subtitle">Кредитный рейтинг</h3>
           <p className="profile-rating">
-            <strong>{rating.score}</strong> / 100 — {rating.label}
+            <strong>{rating.score}</strong> / 1000 — {rating.grade}
           </p>
-          <p className="profile-muted">Обновлено: {rating.computedAt}</p>
+          <p className="profile-muted">
+            Активных: {rating.activeLoans}, закрытых: {rating.paidLoans}, просрочек: {rating.overdueCount}
+          </p>
+          <p className="profile-muted">
+            Новый кредит: {rating.isEligibleForNewLoan ? "доступен" : "недоступен"}
+          </p>
+          {rating.lastOverdueDate && (
+            <p className="profile-muted">Последняя просрочка: {rating.lastOverdueDate}</p>
+          )}
         </div>
       )}
     </section>

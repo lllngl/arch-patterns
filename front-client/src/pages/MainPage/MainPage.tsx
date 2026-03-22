@@ -4,6 +4,7 @@ import { useAuth } from "../../auth/useAuth";
 import type { CurrencyCode } from "../../contracts/banking";
 import { useAccountsStore } from "../../stores/accountsStore";
 import { useAppSettingsStore } from "../../stores/appSettingsStore";
+import { useNotificationStore } from "../../stores/notificationStore";
 import { formatMoney, isCreditLedgerType } from "../../utils/money";
 import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
 import "../../ui/StatusBanner/StatusBanner.css";
@@ -55,6 +56,7 @@ export const MainPage = () => {
 
   const hiddenAccountIds = useAppSettingsStore((s) => s.hiddenAccountIds);
   const toggleHiddenAccount = useAppSettingsStore((s) => s.toggleHiddenAccount);
+  const pushToast = useNotificationStore((s) => s.pushToast);
 
   const [newAccountName, setNewAccountName] = useState("");
   const [moneyAmount, setMoneyAmount] = useState("100");
@@ -128,6 +130,18 @@ export const MainPage = () => {
     }
   };
 
+  const handleCopySelectedAccountId = async () => {
+    if (!selectedAccount) {
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(selectedAccount.id);
+      pushToast("success", "UUID счёта скопирован в буфер обмена.");
+    } catch {
+      pushToast("error", "Не удалось скопировать. Скопируйте вручную.");
+    }
+  };
+
   const handleTransfer = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!user?.id || !selectedAccountId) {
@@ -185,6 +199,19 @@ export const MainPage = () => {
                 <span className={`badge ${selectedAccount.status === "OPEN" ? "badge-open" : "badge-closed"}`}>
                   {selectedAccount.status}
                 </span>
+                <div className="account-id-block">
+                  <span className="account-id-label">ID счёта (UUID для API и переводов)</span>
+                  <div className="account-id-copy-row">
+                    <code className="account-id-value">{selectedAccount.id}</code>
+                    <button
+                      type="button"
+                      className="button button-secondary button-small"
+                      onClick={() => void handleCopySelectedAccountId()}
+                    >
+                      Копировать
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="account-actions-row">
@@ -220,6 +247,7 @@ export const MainPage = () => {
                     <button
                       key={account.id}
                       type="button"
+                      title={`UUID: ${account.id}`}
                       className={`account-picker-item${account.id === selectedAccountId ? " account-picker-item-active" : ""}`}
                       onClick={() => {
                         selectAccount(account.id);
@@ -281,7 +309,10 @@ export const MainPage = () => {
               </div>
 
               <h3 className="card-subtitle">Перевод на другой счёт</h3>
-              <p className="muted small-print">UUID счёта получателя. При разных валютах конвертация по курсу на стороне банка.</p>
+              <p className="muted small-print">
+                В поле ниже укажите UUID счёта-получателя. Свой UUID текущего счёта — в блоке «Текущий счёт» выше. При разных
+                валютах конвертация по курсу на стороне банка.
+              </p>
               <form className="stack" onSubmit={(e) => void handleTransfer(e)}>
                 <div className="inline-form">
                   <input

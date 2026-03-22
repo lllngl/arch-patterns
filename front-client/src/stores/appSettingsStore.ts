@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { appSettingsApi } from "../api/appSettingsApi";
 import type { ThemeId } from "../contracts/app-settings";
+import { useNotificationStore } from "./notificationStore";
 
 interface AppSettingsState {
   theme: ThemeId;
@@ -32,19 +33,31 @@ export const useAppSettingsStore = create<AppSettingsState>((set, get) => ({
   },
 
   setTheme: async (theme) => {
-    const prev = get();
     applyThemeToDom(theme);
     set({ theme });
-    const next = await appSettingsApi.patchSettings({ theme });
+    const { settings: next, syncedToServer } = await appSettingsApi.patchSettings({ theme });
     set({ theme: next.theme, hiddenAccountIds: next.hiddenAccountIds });
+    if (!syncedToServer) {
+      useNotificationStore.getState().pushToast(
+        "info",
+        "Тема сохранена только в этом браузере. Для синхронизации между устройствами (требование курса) нужен user-preferences-service на порту 9010.",
+      );
+    }
   },
 
   toggleHiddenAccount: async (accountId) => {
     const { hiddenAccountIds } = get();
     const has = hiddenAccountIds.includes(accountId);
-    const nextIds = has ? hiddenAccountIds.filter((id) => id !== accountId) : [...hiddenAccountIds, accountId];
-    set({ hiddenAccountIds: nextIds });
-    const next = await appSettingsApi.patchSettings({ hiddenAccountIds: nextIds });
-    set({ hiddenAccountIds: next.hiddenAccountIds, theme: next.theme });
+    const { settings: next, syncedToServer } = has
+      ? await appSettingsApi.unhideAccount(accountId)
+      : await appSettingsApi.hideAccount(accountId);
+    applyThemeToDom(next.theme);
+    set({ theme: next.theme, hiddenAccountIds: next.hiddenAccountIds });
+    if (!syncedToServer) {
+      useNotificationStore.getState().pushToast(
+        "info",
+        "Список скрытых счетов сохранён только в этом браузере. Запустите user-preferences-service (9010), чтобы синхронизировать с сервером.",
+      );
+    }
   },
 }));
