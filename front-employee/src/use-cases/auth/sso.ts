@@ -12,6 +12,10 @@ interface PkceSession {
   redirectUri: string;
 }
 
+interface StartSsoLoginOptions {
+  forceAccountSelection?: boolean;
+}
+
 function encodeBase64Url(bytes: Uint8Array) {
   return btoa(String.fromCharCode(...bytes))
     .replace(/\+/g, "-")
@@ -90,7 +94,7 @@ function ensureSsoConfiguration() {
   }
 }
 
-export async function startSsoLogin() {
+export async function startSsoLogin(options?: StartSsoLoginOptions) {
   ensureSsoConfiguration();
 
   const verifier = randomString();
@@ -108,6 +112,9 @@ export async function startSsoLogin() {
   authorizeUrl.searchParams.set("code_challenge", challenge);
   authorizeUrl.searchParams.set("code_challenge_method", "S256");
   authorizeUrl.searchParams.set("state", state);
+  if (options?.forceAccountSelection) {
+    authorizeUrl.searchParams.set("prompt", "login");
+  }
 
   window.location.assign(authorizeUrl.toString());
 }

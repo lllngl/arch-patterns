@@ -14,6 +14,9 @@ import { ExternalLink, Loader2, ShieldAlert } from "lucide-react";
 export default function LoginPage() {
   const login = useAuthStore((s) => s.login);
   const loginWithSso = useAuthStore((s) => s.loginWithSso);
+  const loginWithSsoAsDifferentUser = useAuthStore(
+    (s) => s.loginWithSsoAsDifferentUser
+  );
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -52,6 +55,17 @@ export default function LoginPage() {
     }
   }
 
+  async function handleSsoLoginAsDifferentUser() {
+    setLoading(true);
+    setError("");
+    try {
+      await loginWithSsoAsDifferentUser();
+    } catch (err) {
+      setError(getErrorMessage(err));
+      setLoading(false);
+    }
+  }
+
   return (
     <section className="bg-muted min-h-screen">
       <div className="flex min-h-screen items-center justify-center px-4">
@@ -77,6 +91,16 @@ export default function LoginPage() {
             >
               {loading ? <Loader2 className="animate-spin" /> : <ExternalLink />}
               Продолжить через Keycloak
+            </Button>
+
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              disabled={loading || Boolean(ssoBlocker)}
+              onClick={handleSsoLoginAsDifferentUser}
+            >
+              Войти под другим аккаунтом
             </Button>
 
             {ssoBlocker && (

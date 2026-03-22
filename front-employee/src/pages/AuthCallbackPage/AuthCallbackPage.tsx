@@ -9,8 +9,12 @@ export default function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const completeSsoLogin = useAuthStore((state) => state.completeSsoLogin);
+  const loginWithSsoAsDifferentUser = useAuthStore(
+    (state) => state.loginWithSsoAsDifferentUser
+  );
   const user = useAuthStore((state) => state.user);
   const [error, setError] = useState<string | null>(null);
+  const [retrying, setRetrying] = useState(false);
 
   useEffect(() => {
     completeSsoLogin(searchParams).then(
@@ -27,6 +31,16 @@ export default function AuthCallbackPage() {
     return <Navigate to="/" replace />;
   }
 
+  async function handleDifferentAccountLogin() {
+    setRetrying(true);
+    try {
+      await loginWithSsoAsDifferentUser();
+    } catch (reason) {
+      setRetrying(false);
+      setError(getErrorMessage(reason));
+    }
+  }
+
   return (
     <section className="bg-muted min-h-screen">
       <div className="flex min-h-screen items-center justify-center px-4">
@@ -36,8 +50,15 @@ export default function AuthCallbackPage() {
               <ShieldAlert className="text-destructive size-8" />
               <h1 className="text-xl font-semibold">Не удалось завершить SSO</h1>
               <p className="text-muted-foreground text-sm">{error}</p>
-              <Button onClick={() => navigate("/login", { replace: true })}>
+              <Button
+                variant="outline"
+                onClick={() => navigate("/login", { replace: true })}
+              >
                 Вернуться ко входу
+              </Button>
+              <Button onClick={() => void handleDifferentAccountLogin()}>
+                {retrying && <Loader2 className="animate-spin" />}
+                Войти под другим аккаунтом
               </Button>
             </>
           ) : (

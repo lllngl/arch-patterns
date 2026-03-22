@@ -49,6 +49,7 @@ interface AuthState {
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<void>;
   loginWithSso: () => Promise<void>;
+  loginWithSsoAsDifferentUser: () => Promise<void>;
   completeSsoLogin: (params: URLSearchParams) => Promise<void>;
   logout: () => Promise<void>;
   fetchUser: () => Promise<void>;
@@ -83,6 +84,10 @@ export const useAuthStore = create<AuthState>()((set) => ({
 
   loginWithSso: async () => {
     await startSsoLogin();
+  },
+
+  loginWithSsoAsDifferentUser: async () => {
+    await startSsoLogin({ forceAccountSelection: true });
   },
 
   completeSsoLogin: async (params) => {
