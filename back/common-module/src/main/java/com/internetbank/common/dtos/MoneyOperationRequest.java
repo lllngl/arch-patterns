@@ -14,6 +14,9 @@ public record MoneyOperationRequest(
         BigDecimal amount,
         CurrencyCode operationCurrency
 ) {
+    public MoneyOperationRequest(BigDecimal amount) {
+        this(amount, null);
+    }
 }
 
 

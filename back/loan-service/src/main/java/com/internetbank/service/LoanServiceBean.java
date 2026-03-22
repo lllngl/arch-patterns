@@ -4,6 +4,7 @@ import com.internetbank.common.clients.AccountServiceClient;
 import com.internetbank.common.clients.UserAppClient;
 import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.MoneyOperationRequest;
+import com.internetbank.common.dtos.OperationAcceptedResponse;
 import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.common.exceptions.BadRequestException;
@@ -127,7 +128,7 @@ public class LoanServiceBean implements LoanService {
         if (!(account.userId().equals(user.id()))) throw new ForbiddenException("Account does not belong to user");
         if (account.balance().compareTo(request.amount()) < 0) throw new BadRequestException("Insufficient funds on account");
 
-        ResponseEntity<AccountDTO> transactionResponse = accountServiceClient.withdraw(
+        ResponseEntity<OperationAcceptedResponse> transactionResponse = accountServiceClient.withdraw(
                 request.accountId(), new MoneyOperationRequest(request.amount()), user.id());
 
         if (!transactionResponse.getStatusCode().is2xxSuccessful()) throw new InternalServerErrorException("Failed to debit amount from account");

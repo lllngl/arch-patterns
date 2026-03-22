@@ -6,10 +6,10 @@ import com.internetbank.common.dtos.AccountTransactionDTO;
 import com.internetbank.account_service.dtos.MoneyOperationRequest;
 import com.internetbank.account_service.dtos.RenameAccountRequest;
 import com.internetbank.account_service.dtos.TransferRequest;
-import com.internetbank.account_service.dtos.TransferResponse;
 import com.internetbank.account_service.enums.AccountStatus;
 import com.internetbank.account_service.enums.TransactionType;
 import com.internetbank.common.security.AuthenticatedUser;
+import com.internetbank.common.dtos.OperationAcceptedResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -26,11 +26,11 @@ public interface AccountService {
 
     void deleteAccount(UUID accountId);
 
-    AccountDTO deposit(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user);
+    OperationAcceptedResponse deposit(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user);
 
-    AccountDTO withdraw(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user);
+    OperationAcceptedResponse withdraw(UUID accountId, MoneyOperationRequest request, AuthenticatedUser user);
 
-    TransferResponse transfer(TransferRequest request, AuthenticatedUser user);
+    OperationAcceptedResponse transfer(TransferRequest request, AuthenticatedUser user);
 
     AccountDTO rename(UUID accountId, RenameAccountRequest request, AuthenticatedUser user);
 

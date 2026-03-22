@@ -6,9 +6,11 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.Import;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.kafka.annotation.EnableKafka;
 
 @SpringBootApplication(scanBasePackages = "com.internetbank")
 @EnableJpaAuditing
+@EnableKafka
 @EnableFeignClients(basePackages = "com.internetbank.common.clients")
 @Import(SecurityConfig.class)
 public class AccountServiceApplication {

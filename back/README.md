@@ -140,7 +140,7 @@ OpenAPI JSON:
 - фактическое изменение баланса и запись в `account_transactions` выполняются асинхронно Kafka consumer-ом
 - история операций и баланс становятся консистентными после обработки consumer-ом
 
-Для внутренних межсервисных `internal/deposit` и `internal/withdraw` используется тот же Kafka-first pipeline, но сам internal endpoint дожидается завершения consumer-а и возвращает итоговый `AccountDTO`. Это нужно, чтобы связанные сервисы вроде `loan-service` не обновляли своё состояние раньше, чем операция реально сохранится в БД `account-service`.
+Для внутренних межсервисных `internal/deposit` и `internal/withdraw` используется тот же минимальный async pipeline: команда записывается в Kafka, а endpoint также возвращает `202 Accepted`.
 
 Формат ответа:
 
@@ -156,6 +156,8 @@ OpenAPI JSON:
 Переменные окружения:
 
 - `KAFKA_BOOTSTRAP_SERVERS` — bootstrap servers для Kafka, по умолчанию `localhost:9092`
+
+В минимальной реализации дополнительная таблица статусов Kafka-команд не используется: после успешной публикации в Kafka операция дальше обрабатывается consumer-ом и попадает в БД, а UI узнаёт об изменении через WebSocket invalidation.
 
 ## 6) Realtime-обновление истории операций
 

@@ -4,10 +4,10 @@ import com.internetbank.account_service.dtos.AccountCreateRequest;
 import com.internetbank.common.clients.UserAppClient;
 import com.internetbank.common.dtos.AccountDTO;
 import com.internetbank.common.dtos.AccountTransactionDTO;
+import com.internetbank.common.dtos.OperationAcceptedResponse;
 import com.internetbank.account_service.dtos.MoneyOperationRequest;
 import com.internetbank.account_service.dtos.RenameAccountRequest;
 import com.internetbank.account_service.dtos.TransferRequest;
-import com.internetbank.account_service.dtos.TransferResponse;
 import com.internetbank.account_service.enums.AccountStatus;
 import com.internetbank.account_service.enums.TransactionType;
 import com.internetbank.account_service.services.AccountService;
@@ -15,6 +15,7 @@ import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.common.parameters.PageableUtils;
 import com.internetbank.common.security.AuthenticatedUser;
+import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -88,31 +89,31 @@ public class AccountController {
 
     @PatchMapping("/{accountId}/deposit")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<AccountDTO> deposit(
+    public ResponseEntity<OperationAcceptedResponse> deposit(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
             @AuthenticationPrincipal AuthenticatedUser user) {
-        AccountDTO response = accountService.deposit(accountId, request, user);
-        return ResponseEntity.ok(response);
+        OperationAcceptedResponse response = accountService.deposit(accountId, request, user);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @PatchMapping("/{accountId}/withdraw")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<AccountDTO> withdraw(
+    public ResponseEntity<OperationAcceptedResponse> withdraw(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
             @AuthenticationPrincipal AuthenticatedUser user) {
-        AccountDTO response = accountService.withdraw(accountId, request, user);
-        return ResponseEntity.ok(response);
+        OperationAcceptedResponse response = accountService.withdraw(accountId, request, user);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @PostMapping("/transfers")
     @PreAuthorize("hasRole('CLIENT')")
-    public ResponseEntity<TransferResponse> transfer(
+    public ResponseEntity<OperationAcceptedResponse> transfer(
             @RequestBody @Valid TransferRequest request,
             @AuthenticationPrincipal AuthenticatedUser user) {
-        TransferResponse response = accountService.transfer(request, user);
-        return ResponseEntity.ok(response);
+        OperationAcceptedResponse response = accountService.transfer(request, user);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     @PatchMapping("/{accountId}/name")
@@ -165,6 +166,7 @@ public class AccountController {
         return ResponseEntity.ok(response);
     }
 
+    @Hidden
     @GetMapping("/{accountId}/internal")
     @PreAuthorize("@internalSecurity.hasInternalAccess()")
     public ResponseEntity<AccountDTO> getAccountByIdInternal(
@@ -188,26 +190,28 @@ public class AccountController {
 
     }
 
+    @Hidden
     @PatchMapping("/{accountId}/internal/deposit")
     @PreAuthorize("@internalSecurity.hasInternalAccess()")
-    public ResponseEntity<AccountDTO> internalDeposit(
+    public ResponseEntity<OperationAcceptedResponse> internalDeposit(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
             @RequestParam("userId") UUID userId) {
         UserDTO user = userAppClient.getUserById(userId);
-        AccountDTO response = accountService.deposit(accountId, request, toAuthenticatedUser(user));
-        return ResponseEntity.ok(response);
+        OperationAcceptedResponse response = accountService.deposit(accountId, request, toAuthenticatedUser(user));
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
+    @Hidden
     @PatchMapping("/{accountId}/internal/withdraw")
     @PreAuthorize("@internalSecurity.hasInternalAccess()")
-    public ResponseEntity<AccountDTO> internalWithdraw(
+    public ResponseEntity<OperationAcceptedResponse> internalWithdraw(
             @PathVariable("accountId") UUID accountId,
             @RequestBody @Valid MoneyOperationRequest request,
             @RequestParam("userId") UUID userId) {
         UserDTO user = userAppClient.getUserById(userId);
-        AccountDTO response = accountService.withdraw(accountId, request, toAuthenticatedUser(user));
-        return ResponseEntity.ok(response);
+        OperationAcceptedResponse response = accountService.withdraw(accountId, request, toAuthenticatedUser(user));
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
     }
 
     private AuthenticatedUser toAuthenticatedUser(UserDTO user) {
