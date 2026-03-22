@@ -1,4 +1,4 @@
-package com.internetbank.account_service.configs;
+package com.internetbank.common.config;
 
 import lombok.Getter;
 import lombok.Setter;

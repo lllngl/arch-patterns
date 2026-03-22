@@ -1,5 +1,6 @@
 package com.internetbank.dto.response;
 
+import com.internetbank.common.enums.CurrencyCode;
 import com.internetbank.db.model.enums.LoanStatus;
 import com.internetbank.db.model.enums.PaymentType;
 
@@ -15,6 +16,7 @@ public record LoanResponse (
         BigDecimal amount,
         Integer termMonths,
         LoanStatus status,
+        CurrencyCode currency,
         PaymentType paymentType,
         BigDecimal monthlyPayment,
         BigDecimal remainingAmount,

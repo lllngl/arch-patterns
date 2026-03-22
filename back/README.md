@@ -6,6 +6,7 @@
 - `user-service` — пользователи, аутентификация, роли.
 - `account-service` — счета и операции по счетам.
 - `loan-service` — кредиты и взаимодействия с ними.
+- `user-preferences-service` — настройки пользовательской системы.
 
 ## Требования
 
@@ -77,11 +78,18 @@ docker compose -f account-service/docker-compose.yml up -d
 docker compose -f loan-service/docker-compose.yml up -d
 ```
 
+`user-preferences-service`:
+
+```bash
+docker compose -f user-preferences-service/docker-compose.yml up -d
+```
+
 Порты БД из compose:
 
 - `user-service` DB: `localhost:5430` (db: `user`)
 - `account-service` DB: `localhost:5435` (db: `account`)
 - `loan-service` DB: `localhost:5437` (db: `loan`)
+- `user-preferences-service` DB: `localhost:5438` (db: `user_preferences`)
 
 ## 2) Порты БД в конфигурации
 
@@ -90,6 +98,7 @@ docker compose -f loan-service/docker-compose.yml up -d
 - `jdbc:postgresql://localhost:5430/user`
 - `jdbc:postgresql://localhost:5435/account`
 - `jdbc:postgresql://localhost:5437/loan`
+- `jdbc:postgresql://localhost:5438/user_preferences`
 
 ## 3) Запустить сервисы
 
@@ -113,6 +122,10 @@ docker compose -f loan-service/docker-compose.yml up -d
 .\gradlew.bat :loan-service:bootRun
 ```
 
+```bash
+.\gradlew.bat :user-preferences-service:bootRun
+```
+
 Если установлен Gradle глобально, можно использовать `gradle` вместо `.\gradlew.bat`.
 
 `common-module` отдельно не запускается (это библиотечный модуль).
@@ -122,12 +135,14 @@ docker compose -f loan-service/docker-compose.yml up -d
 - User Service: `http://localhost:9000/swagger-ui/index.html`
 - Account Service: `http://localhost:9005/swagger-ui/index.html`
 - Loan Service: `http://localhost:9001/swagger-ui/index.html`
+- User Preferences Service: `http://localhost:9010/swagger-ui/index.html`
 
 OpenAPI JSON:
 
 - `http://localhost:9000/v3/api-docs`
 - `http://localhost:9005/v3/api-docs`
 - `http://localhost:9001/v3/api-docs`
+- `http://localhost:9010/v3/api-docs`
 
 ## 5) Асинхронные операции по счетам
 

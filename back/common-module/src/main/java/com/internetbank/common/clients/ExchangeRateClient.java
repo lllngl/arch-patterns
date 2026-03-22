@@ -1,6 +1,6 @@
-package com.internetbank.account_service.integration;
+package com.internetbank.common.clients;
 
-import com.internetbank.account_service.configs.ExchangeRateProperties;
+import com.internetbank.common.config.ExchangeRateProperties;
 import com.internetbank.common.enums.CurrencyCode;
 import com.internetbank.common.exceptions.InternalServerErrorException;
 import org.springframework.stereotype.Component;
