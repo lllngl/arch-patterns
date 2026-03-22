@@ -6,16 +6,19 @@
 }
 
 .status-banner-info {
-  background: rgba(59, 130, 246, 0.12);
-  border: 1px solid rgba(59, 130, 246, 0.25);
+  background: var(--banner-info-bg);
+  color: var(--banner-info-fg);
+  border: 1px solid var(--banner-info-border);
 }
 
 .status-banner-error {
-  background: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: var(--banner-error-bg);
+  color: var(--banner-error-fg);
+  border: 1px solid var(--banner-error-border);
 }
 
 .status-banner-success {
-  background: rgba(34, 197, 94, 0.12);
-  border: 1px solid rgba(34, 197, 94, 0.28);
+  background: var(--banner-success-bg);
+  color: var(--banner-success-fg);
+  border: 1px solid var(--banner-success-border);
 }

@@ -24,6 +24,17 @@
   --toast-bg: #ffffff;
   --toast-fg: #111827;
 
+  /* Баннеры статуса (инфо / ошибка / успех) */
+  --banner-info-bg: #eff6ff;
+  --banner-info-fg: #1d4ed8;
+  --banner-info-border: rgba(59, 130, 246, 0.35);
+  --banner-error-bg: #fef2f2;
+  --banner-error-fg: #b91c1c;
+  --banner-error-border: rgba(239, 68, 68, 0.35);
+  --banner-success-bg: #ecfdf5;
+  --banner-success-fg: #047857;
+  --banner-success-border: rgba(34, 197, 94, 0.35);
+
   color: var(--color-fg);
   background-color: var(--color-bg);
 }
@@ -44,6 +55,16 @@ html[data-theme="dark"] {
   --page-bg: #0f172a;
   --toast-bg: #1e293b;
   --toast-fg: #e5e7eb;
+
+  --banner-info-bg: rgba(59, 130, 246, 0.15);
+  --banner-info-fg: #93c5fd;
+  --banner-info-border: rgba(59, 130, 246, 0.4);
+  --banner-error-bg: rgba(239, 68, 68, 0.12);
+  --banner-error-fg: #fca5a5;
+  --banner-error-border: rgba(239, 68, 68, 0.4);
+  --banner-success-bg: rgba(34, 197, 94, 0.12);
+  --banner-success-fg: #86efac;
+  --banner-success-border: rgba(34, 197, 94, 0.4);
 
   color: var(--color-fg);
   background-color: var(--color-bg);

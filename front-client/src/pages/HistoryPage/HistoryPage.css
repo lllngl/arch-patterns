@@ -64,16 +64,19 @@
 .history-banner {
   border-radius: 10px;
   padding: 10px 12px;
+  border: 1px solid transparent;
 }
 
 .history-info {
-  background-color: #eff6ff;
-  color: #1d4ed8;
+  background-color: var(--banner-info-bg);
+  color: var(--banner-info-fg);
+  border-color: var(--banner-info-border);
 }
 
 .history-error {
-  background-color: #fef2f2;
-  color: #b91c1c;
+  background-color: var(--banner-error-bg);
+  color: var(--banner-error-fg);
+  border-color: var(--banner-error-border);
 }
 
 .history-muted {
