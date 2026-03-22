@@ -1,5 +1,6 @@
 package com.internetbank.dto.request;
 
+import com.internetbank.common.enums.CurrencyCode;
 import jakarta.validation.constraints.*;
 
 import java.math.BigDecimal;
@@ -15,6 +16,9 @@ public record CreateTariffRequest (
     @DecimalMax(value = "1.00", message = "Rate cannot be greater than 1.00")
     @Digits(integer = 1, fraction = 2, message = "Rate must have up to 1 digits before and 2 after the decimal point")
     BigDecimal rate,
+
+    @NotNull(message = "Currency cannot be null")
+    CurrencyCode currency,
 
     @NotNull
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")

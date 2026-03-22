@@ -1,7 +1,6 @@
-package com.internetbank.account_service.services.impl;
+package com.internetbank.common.service;
 
-import com.internetbank.account_service.integration.ExchangeRateClient;
-import com.internetbank.account_service.services.ExchangeRateService;
+import com.internetbank.common.clients.ExchangeRateClient;
 import com.internetbank.common.enums.CurrencyCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

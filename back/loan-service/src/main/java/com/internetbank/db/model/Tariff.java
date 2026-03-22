@@ -1,5 +1,6 @@
 package com.internetbank.db.model;
 
+import com.internetbank.common.enums.CurrencyCode;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
@@ -33,6 +34,10 @@ public class Tariff {
     @Digits(integer = 1, fraction = 2, message = "Rate must have up to 1 digits before and 2 after the decimal point")
     @NotNull(message = "Rate cannot be null")
     private BigDecimal rate;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency", nullable = false)
+    private CurrencyCode currency;
 
     @Column(name = "min_amount", nullable = false, precision = 19, scale = 2)
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")

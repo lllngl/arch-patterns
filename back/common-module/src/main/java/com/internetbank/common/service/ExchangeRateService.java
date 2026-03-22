@@ -1,4 +1,4 @@
-package com.internetbank.account_service.services;
+package com.internetbank.common.service;
 
 import com.internetbank.common.enums.CurrencyCode;
 
