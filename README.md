@@ -3,3 +3,5 @@
 
 Диаграмма компонентов:
 ![uml diagram](patterns-component-uml.drawio.png)
+
+Диаграмма пакетов клиентской части фронта:
