@@ -6,6 +6,8 @@ import java.util.UUID;
 
 public record AccountTransactionsInvalidationEvent(
         UUID commandId,
+        AccountOperationCommandType operationType,
+        UUID initiatedByUserId,
         Set<UUID> accountIds,
         LocalDateTime emittedAt
 ) {
