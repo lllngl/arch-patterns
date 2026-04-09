@@ -7,6 +7,7 @@
 - `account-service` — счета и операции по счетам.
 - `loan-service` — кредиты и взаимодействия с ними.
 - `user-preferences-service` — настройки пользовательской системы.
+- `monitoring-service` — сбор telemetry по HTTP-запросам, ошибок и времени ответа.
 
 ## Требования
 
@@ -84,12 +85,19 @@ docker compose -f loan-service/docker-compose.yml up -d
 docker compose -f user-preferences-service/docker-compose.yml up -d
 ```
 
+`monitoring-service`:
+
+```bash
+docker compose -f monitoring-service/docker-compose.yml up -d
+```
+
 Порты БД из compose:
 
 - `user-service` DB: `localhost:5430` (db: `user`)
 - `account-service` DB: `localhost:5435` (db: `account`)
 - `loan-service` DB: `localhost:5437` (db: `loan`)
 - `user-preferences-service` DB: `localhost:5438` (db: `user_preferences`)
+- `monitoring-service` DB: `localhost:5439` (db: `monitoring`)
 
 ## 2) Порты БД в конфигурации
 
@@ -99,6 +107,7 @@ docker compose -f user-preferences-service/docker-compose.yml up -d
 - `jdbc:postgresql://localhost:5435/account`
 - `jdbc:postgresql://localhost:5437/loan`
 - `jdbc:postgresql://localhost:5438/user_preferences`
+- `jdbc:postgresql://localhost:5439/monitoring`
 
 ## 3) Запустить сервисы
 
@@ -126,6 +135,10 @@ docker compose -f user-preferences-service/docker-compose.yml up -d
 .\gradlew.bat :user-preferences-service:bootRun
 ```
 
+```bash
+.\gradlew.bat :monitoring-service:bootRun
+```
+
 Если установлен Gradle глобально, можно использовать `gradle` вместо `.\gradlew.bat`.
 
 `common-module` отдельно не запускается (это библиотечный модуль).
@@ -136,6 +149,7 @@ docker compose -f user-preferences-service/docker-compose.yml up -d
 - Account Service: `http://localhost:9005/swagger-ui/index.html`
 - Loan Service: `http://localhost:9001/swagger-ui/index.html`
 - User Preferences Service: `http://localhost:9010/swagger-ui/index.html`
+- Monitoring Service: `http://localhost:9015/swagger-ui/index.html`
 
 OpenAPI JSON:
 
@@ -143,6 +157,7 @@ OpenAPI JSON:
 - `http://localhost:9005/v3/api-docs`
 - `http://localhost:9001/v3/api-docs`
 - `http://localhost:9010/v3/api-docs`
+- `http://localhost:9015/v3/api-docs`
 
 ## 5) Асинхронные операции по счетам
 
@@ -204,6 +219,54 @@ OpenAPI JSON:
 - не дублируется серверная логика пагинации и фильтров истории операций
 - по WebSocket передаётся короткое событие, а не целая страница данных
 - источником истины для UI остаётся PostgreSQL + существующий REST endpoint
+
+Для сотрудников backend также публикует отдельный broadcast-канал со всеми новыми операциями клиентов:
+
+- подписка: `/topic/employee/operations`
+- доступ разрешён только роли `EMPLOYEE`
+
+Формат employee-события:
+
+```json
+{
+  "eventType": "ACCOUNT_OPERATION_CREATED",
+  "operationRequestId": "uuid",
+  "operationType": "TRANSFER",
+  "initiatedByUserId": "uuid",
+  "accountIds": ["uuid"],
+  "customerIds": ["uuid"],
+  "changedAt": "2026-03-22T01:23:46"
+}
+```
+
+## 7) Мониторинг и telemetry
+
+Во все backend-сервисы через `common-module` добавлен общий HTTP telemetry filter.
+
+Что собирается на каждый запрос:
+
+- `traceId`
+- имя сервиса
+- HTTP-метод
+- path
+- статус ответа
+- время выполнения в миллисекундах
+- признак ошибки
+- timestamp
+
+Как это работает:
+
+- каждый сервис логирует запрос в структурированном виде
+- каждому запросу присваивается `X-Trace-Id` или используется входящий
+- при межсервисных вызовах `X-Trace-Id` пробрасывается дальше через Feign
+- telemetry best-effort отправляется в `monitoring-service`
+
+`monitoring-service` предоставляет API для фронта и дашбордов:
+
+- `POST /api/v1/monitoring/internal/telemetry` — внутренний ingest telemetry
+- `GET /api/v1/monitoring/summary` — агрегированная статистика по сервису и интервалу
+- `GET /api/v1/monitoring/timeline` — точки для графиков по времени
+- `GET /api/v1/monitoring/errors/recent` — последние ошибки
 
 
 

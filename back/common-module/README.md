@@ -12,6 +12,7 @@
 - `clients` — общие Feign-клиенты и конфиг для межсервисного взаимодействия.
 - `config` — базовая OpenAPI-конфигурация.
 - `enums` — общие перечисления (`RoleName`, `SortOption`).
+- `telemetry` — общий HTTP telemetry filter, trace context и клиент отправки данных в `monitoring-service`.
 
 ## Как использовать в сервисах
 
@@ -118,3 +119,27 @@ Account account = resourceAccessService.getResourceAndCheckAuthorization(
         Account::getUserId
 );
 ```
+
+### 8) Общая telemetry и trace propagation
+
+`RequestTelemetryFilter` автоматически подключается в сервисах, которые используют `common-module`.
+
+Что делает filter:
+
+- генерирует или принимает входящий `X-Trace-Id`
+- пишет `traceId` в MDC и в response header
+- логирует метод, path, статус, время выполнения и признак ошибки
+- best-effort отправляет telemetry-событие в `monitoring-service`
+
+Для межсервисных HTTP-вызовов `SecurityFeignClientConfig` дополнительно пробрасывает `X-Trace-Id`, поэтому один traceId проходит через цепочку сервисов.
+
+Основные настройки:
+
+- `app.telemetry.enabled` — включает локальное логирование и trace обработку
+- `app.telemetry.export-enabled` — включает отправку в `monitoring-service`
+- `app.telemetry.monitoring-base-url` — базовый URL monitoring-service, по умолчанию `http://localhost:9015`
+
+Внутренний контракт отправки telemetry:
+
+- endpoint: `POST /api/v1/monitoring/internal/telemetry`
+- доступ защищён тем же `X-Internal-Request`, что и остальные внутренние backend-вызовы

@@ -1,0 +1,27 @@
+server:
+  port: 9015
+spring:
+  application:
+    name: monitoring-service
+  datasource:
+    url: jdbc:postgresql://localhost:5439/monitoring
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8081/realms/internetbank}
+internal:
+  api:
+    key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
+
+logging:
+  level:
+    root: INFO
+    com.internetbank: DEBUG
