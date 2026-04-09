@@ -1,0 +1,27 @@
+.auth-callback-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--page-bg, #f4f6fb);
+}
+
+.auth-callback-card {
+  max-width: 420px;
+  width: 100%;
+  padding: 24px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 40px rgba(15, 23, 42, 0.08);
+}
+
+.auth-callback-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+}
+
+.auth-callback-text {
+  margin: 0;
+  color: #475569;
+}

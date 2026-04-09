@@ -14,6 +14,7 @@ import {
 
 import { AppBreadcrumbs } from "./AppBreadcrumbs";
 import { NavUser } from "@/components/custom/NavUser";
+import { ThemeToggle } from "@/components/custom/ThemeToggle";
 import {
   HomeIcon,
   Users,
@@ -22,7 +23,6 @@ import {
   Percent,
   Banknote,
 } from "lucide-react";
-import { Toaster } from "@/components/ui/sonner";
 
 const items = [
   {
@@ -97,12 +97,14 @@ export default function AppLayout() {
           <nav className="text-sm font-normal leading-5 tracking-normal font-sans flex items-center gap-1">
             <AppBreadcrumbs />
           </nav>
+          <div className="ml-auto">
+            <ThemeToggle />
+          </div>
         </div>
         <div className="flex-1 min-h-0 overflow-auto">
           <Outlet />
         </div>
       </SidebarInset>
-      <Toaster richColors position="bottom-right" />
     </SidebarProvider>
   );
 }

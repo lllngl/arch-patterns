@@ -1,13 +1,16 @@
 import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import "./App.css";
-import { AuthProvider } from "./auth/AuthContext";
+import { AuthBootstrap } from "./app/AuthBootstrap";
+import { AppErrorBoundary } from "./app/AppErrorBoundary";
 
 function App() {
   return (
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>
+    <AppErrorBoundary>
+      <AuthBootstrap>
+        <RouterProvider router={router} />
+      </AuthBootstrap>
+    </AppErrorBoundary>
   );
 }
 

@@ -22,9 +22,8 @@ import type { TariffsFilterParams } from "@/api/tariffs";
 import type { Page, TariffResponse } from "@/types";
 import { CreateTariffDialog } from "./CreateTariffDialog";
 import { toast } from "sonner";
-import axios from "axios";
-import { localizeError } from "@/lib/error-messages";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { getErrorMessage } from "@/lib/http-error";
 
 const PAGE_SIZE = 10;
 
@@ -46,8 +45,8 @@ export default function TariffsPage() {
       if (activeFilter !== "all") params.active = activeFilter === "true";
       const { data } = await tariffsApi.getAll(params);
       setData(data);
-    } catch {
-      toast.error("Ошибка загрузки тарифов");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -67,10 +66,8 @@ export default function TariffsPage() {
         toast.success(`Тариф «${tariff.name}» активирован`);
       }
       fetchTariffs();
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 

@@ -1,14 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { ApiError } from "../../auth/api";
-import { useAuth } from "../../auth/AuthContext";
-import { bankingApi } from "../../banking/api";
-import type { AccountDTO, AccountTransactionDTO } from "../../banking/types";
+import { useAuth } from "../../auth/useAuth";
+import { useAccountsStore } from "../../stores/accountsStore";
+import { formatMoney, isCreditLedgerType } from "../../utils/money";
+import { StatusBanner } from "../../ui/StatusBanner/StatusBanner";
+import "../../ui/StatusBanner/StatusBanner.css";
 import "./HistoryPage.css";
-
-function formatMoney(value: number): string {
-  return new Intl.NumberFormat("ru-RU", { style: "currency", currency: "RUB" }).format(value);
-}
 
 function formatDate(value: string | null): string {
   if (!value) {
@@ -27,72 +24,55 @@ function formatDate(value: string | null): string {
 export const HistoryPage = () => {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [accounts, setAccounts] = useState<AccountDTO[]>([]);
-  const [transactions, setTransactions] = useState<AccountTransactionDTO[]>([]);
-  const [selectedAccountId, setSelectedAccountId] = useState(searchParams.get("accountId") ?? "");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const accounts = useAccountsStore((s) => s.accounts);
+  const transactions = useAccountsStore((s) => s.transactions);
+  const selectedAccountId = useAccountsStore((s) => s.selectedAccountId);
+  const selectAccount = useAccountsStore((s) => s.selectAccount);
+  const loadAccounts = useAccountsStore((s) => s.loadAccounts);
+  const loadTransactions = useAccountsStore((s) => s.loadTransactions);
+  const subscribeTransactionsChannel = useAccountsStore((s) => s.subscribeTransactionsChannel);
+  const unsubscribeTransactionsChannel = useAccountsStore((s) => s.unsubscribeTransactionsChannel);
+  const isLoading = useAccountsStore((s) => s.isLoading);
+  const lastError = useAccountsStore((s) => s.lastError);
 
   useEffect(() => {
-    const loadAccounts = async () => {
-      if (!user?.id) {
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-      try {
-        const page = await bankingApi.getUserAccounts(user.id, { size: 100, sortBy: "createdAt", sortDir: "DESC" });
-        setAccounts(page.content);
-
-        if (page.content.length === 0) {
-          setSelectedAccountId("");
-          return;
-        }
-
-        if (!page.content.some((account) => account.id === selectedAccountId)) {
-          setSelectedAccountId(page.content[0].id);
-        }
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message);
-        } else {
-          setError("Не удалось загрузить счета.");
-        }
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadAccounts();
-  }, [user?.id]);
+    if (!user?.id) {
+      return;
+    }
+    void loadAccounts(user.id);
+  }, [user?.id, loadAccounts]);
 
   useEffect(() => {
-    const loadTransactions = async () => {
-      if (!selectedAccountId) {
-        setTransactions([]);
-        return;
-      }
+    if (accounts.length === 0) {
+      return;
+    }
+    const fromUrl = searchParams.get("accountId");
+    if (fromUrl && accounts.some((a) => a.id === fromUrl) && fromUrl !== selectedAccountId) {
+      selectAccount(fromUrl);
+      return;
+    }
+    if (!fromUrl && selectedAccountId !== accounts[0].id) {
+      selectAccount(accounts[0].id);
+      setSearchParams({ accountId: accounts[0].id }, { replace: true });
+    }
+  }, [accounts, searchParams, selectedAccountId, selectAccount, setSearchParams]);
 
-      setSearchParams({ accountId: selectedAccountId }, { replace: true });
-      setError(null);
-      setIsLoading(true);
-      try {
-        const page = await bankingApi.getTransactions(selectedAccountId, { size: 200, sortBy: "createdAt", sortDir: "DESC" });
-        setTransactions(page.content);
-      } catch (err) {
-        if (err instanceof ApiError) {
-          setError(err.message);
-        } else {
-          setError("Не удалось загрузить историю операций.");
-        }
-      } finally {
-        setIsLoading(false);
-      }
+  useEffect(() => {
+    if (!selectedAccountId) {
+      return;
+    }
+    void loadTransactions(selectedAccountId);
+  }, [selectedAccountId, loadTransactions]);
+
+  useEffect(() => {
+    if (!selectedAccountId) {
+      return;
+    }
+    subscribeTransactionsChannel(selectedAccountId);
+    return () => {
+      unsubscribeTransactionsChannel();
     };
-
-    void loadTransactions();
-  }, [selectedAccountId, setSearchParams]);
+  }, [selectedAccountId, subscribeTransactionsChannel, unsubscribeTransactionsChannel]);
 
   return (
     <section className="history-page">
@@ -106,6 +86,9 @@ export const HistoryPage = () => {
         </Link>
       </div>
 
+      {isLoading && <StatusBanner tone="info" message="Загрузка..." />}
+      {lastError && <StatusBanner tone="error" message={lastError} />}
+
       <article className="history-card">
         <label htmlFor="account-select" className="history-label">
           Выберите счет
@@ -114,37 +97,41 @@ export const HistoryPage = () => {
           id="account-select"
           className="history-select"
           value={selectedAccountId}
-          onChange={(event) => setSelectedAccountId(event.target.value)}
+          onChange={(event) => {
+            const value = event.target.value;
+            selectAccount(value);
+            setSearchParams({ accountId: value }, { replace: true });
+          }}
         >
           {accounts.map((account) => (
             <option key={account.id} value={account.id}>
-              {(account.name || "Без названия")} - {formatMoney(account.balance)} ({account.status})
+              {(account.name || "Без названия")} — {formatMoney(account.balance, account.currency)}
             </option>
           ))}
         </select>
-      </article>
 
-      {isLoading && <div className="history-banner history-info">Загрузка...</div>}
-      {error && <div className="history-banner history-error">{error}</div>}
-
-      <article className="history-card">
-        {transactions.length === 0 ? (
+        {!selectedAccountId ? (
+          <p className="history-muted">Нет счетов для отображения.</p>
+        ) : transactions.length === 0 ? (
           <p className="history-muted">Операций пока нет.</p>
         ) : (
           <ul className="history-list">
-            {transactions.map((transaction) => (
-              <li key={transaction.id} className="history-item">
-                <div>
-                  <p className="history-type">{transaction.type}</p>
-                  <p className="history-date">{formatDate(transaction.createdAt)}</p>
-                  <p className="history-description">{transaction.description || "Операция по счету"}</p>
-                </div>
-                <p className={transaction.type === "INCOME" ? "history-amount-plus" : "history-amount-minus"}>
-                  {transaction.type === "INCOME" ? "+" : "-"}
-                  {formatMoney(transaction.amount)}
-                </p>
-              </li>
-            ))}
+            {transactions.map((transaction) => {
+              const cur = transaction.accountCurrency ?? transaction.operationCurrency ?? "RUB";
+              const credit = isCreditLedgerType(transaction.type);
+              return (
+                <li key={transaction.id} className="history-item">
+                  <div>
+                    <p className="history-type">{transaction.type}</p>
+                    <p className="history-date">{formatDate(transaction.createdAt)}</p>
+                  </div>
+                  <p className={credit ? "history-amount-plus" : "history-amount-minus"}>
+                    {credit ? "+" : "-"}
+                    {formatMoney(transaction.amount, cur)}
+                  </p>
+                </li>
+              );
+            })}
           </ul>
         )}
       </article>

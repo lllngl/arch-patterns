@@ -1,5 +1,6 @@
 package com.internetbank.db.model;
 
+import com.internetbank.common.enums.CurrencyCode;
 import com.internetbank.db.model.enums.LoanStatus;
 import com.internetbank.db.model.enums.PaymentType;
 import jakarta.persistence.*;
@@ -36,6 +37,10 @@ public class Loan {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private LoanStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "currency_code", nullable = false)
+    private CurrencyCode currencyCode;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "payment_type", nullable = false)

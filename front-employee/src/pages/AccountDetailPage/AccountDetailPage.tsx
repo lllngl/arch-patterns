@@ -30,8 +30,6 @@ import type {
   TransactionType,
 } from "@/types";
 import { toast } from "sonner";
-import axios from "axios";
-import { localizeError } from "@/lib/error-messages";
 import {
   ArrowDown,
   ArrowLeft,
@@ -40,6 +38,10 @@ import {
   ChevronRight,
   Trash2,
 } from "lucide-react";
+import { HiddenAccountToggle } from "@/components/custom/HiddenAccountToggle";
+import { LiveConnectionBadge } from "@/components/custom/LiveConnectionBadge";
+import { getErrorMessage } from "@/lib/http-error";
+import { useLiveAccountTransactions } from "@/use-cases/accounts/use-live-account-transactions";
 
 const PAGE_SIZE = 15;
 
@@ -72,7 +74,7 @@ export default function AccountDetailPage() {
     accountsApi
       .getById(accountId)
       .then(({ data }) => setAccount(data))
-      .catch(() => toast.error("Ошибка загрузки счёта"))
+      .catch((error) => toast.error(getErrorMessage(error)))
       .finally(() => setLoadingAccount(false));
   }, [accountId]);
 
@@ -91,8 +93,8 @@ export default function AccountDetailPage() {
       if (toDate) params.toDate = new Date(toDate + "T23:59:59").toISOString();
       const { data } = await accountsApi.getTransactions(accountId, params);
       setTransactions(data);
-    } catch {
-      toast.error("Ошибка загрузки операций");
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoadingTx(false);
     }
@@ -102,6 +104,8 @@ export default function AccountDetailPage() {
     fetchTransactions();
   }, [fetchTransactions]);
 
+  const connectionState = useLiveAccountTransactions(accountId, fetchTransactions);
+
   async function handleDeleteAccount() {
     if (!account) return;
     if (!window.confirm("Удалить этот счёт? Действие необратимо.")) return;
@@ -109,10 +113,8 @@ export default function AccountDetailPage() {
       await accountsApi.delete(account.id);
       toast.success("Счёт удалён");
       navigate("/accounts");
-    } catch (err) {
-      if (axios.isAxiosError(err)) {
-        toast.error(localizeError(err.response?.data?.message));
-      }
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
@@ -147,9 +149,11 @@ export default function AccountDetailPage() {
         <Badge variant={account.status === "OPEN" ? "secondary" : "outline"}>
           {STATUS_LABELS[account.status] ?? account.status}
         </Badge>
+        <LiveConnectionBadge state={connectionState} />
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 flex-wrap">
+        <HiddenAccountToggle accountId={account.id} />
         <Button variant="destructive" size="sm" onClick={handleDeleteAccount}>
           <Trash2 /> Удалить счёт
         </Button>
@@ -190,7 +194,13 @@ export default function AccountDetailPage() {
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-lg font-semibold">История операций</h2>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <h2 className="text-lg font-semibold">История операций</h2>
+          <p className="text-muted-foreground text-sm">
+            Realtime работает по push invalidation. Если WS backend не настроен,
+            список обновляется только через REST.
+          </p>
+        </div>
 
         <div className="flex items-end gap-3 flex-wrap">
           <div className="space-y-1.5">

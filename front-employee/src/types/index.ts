@@ -3,23 +3,26 @@ export type Gender = "MALE" | "FEMALE";
 export type AccountStatus = "OPEN" | "CLOSED";
 export type TransactionType = "INCOME" | "EXPENSE";
 export type SortOption = "ASC" | "DESC";
+export type PreferenceTheme = "LIGHT" | "DARK";
+export type PaymentStatus = "PAID" | "LATE" | "OVERDUE" | "SKIPPED";
 
 export interface UserDTO {
   id: string;
+  keycloakUserId?: string | null;
   firstName: string;
   lastName: string;
   patronymic: string | null;
   email: string;
   phone: number | null;
   gender: string;
-  role: RoleName;
+  roles: RoleName[] | null;
   isBlocked: boolean;
   birthDate: string;
 }
 
 export interface AccountDTO {
   id: string;
-  userId: string;
+  userId: string | null;
   name: string | null;
   balance: number;
   status: AccountStatus;
@@ -145,4 +148,44 @@ export interface RepayLoanRequest {
   userId: string;
   accountId: string;
   amount: number;
+}
+
+export interface PaymentHistoryResponse {
+  paymentId: string;
+  loanId: string;
+  paymentAmount: number;
+  currencyCode: string;
+  paymentAmountInLoanCurrency: number;
+  loanCurrencyCode: string;
+  expectedPaymentDate: string;
+  actualPaymentDate: string | null;
+  status: PaymentStatus;
+  penaltyAmount: number;
+}
+
+export interface CreditRatingResponse {
+  score: number;
+  grade: string;
+  totalLoans: number;
+  activeLoans: number;
+  paidLoans: number;
+  overdueCount: number;
+  totalPenalties: number;
+  totalOverdueAmount: number;
+  lastOverdueDate: string | null;
+  creditUtilization: number;
+  isEligibleForNewLoan: boolean;
+}
+
+export interface UserPreferencesResponse {
+  id: string;
+  userId: string;
+  deviceId: string;
+  theme: PreferenceTheme;
+  hiddenAccountsIds: string[];
+}
+
+export interface UpdatePreferencesRequest {
+  theme?: PreferenceTheme;
+  hiddenAccountIds?: string[];
 }

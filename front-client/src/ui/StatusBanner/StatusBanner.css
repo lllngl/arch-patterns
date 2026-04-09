@@ -1,0 +1,24 @@
+.status-banner {
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  margin-bottom: 12px;
+}
+
+.status-banner-info {
+  background: var(--banner-info-bg);
+  color: var(--banner-info-fg);
+  border: 1px solid var(--banner-info-border);
+}
+
+.status-banner-error {
+  background: var(--banner-error-bg);
+  color: var(--banner-error-fg);
+  border: 1px solid var(--banner-error-border);
+}
+
+.status-banner-success {
+  background: var(--banner-success-bg);
+  color: var(--banner-success-fg);
+  border: 1px solid var(--banner-success-border);
+}

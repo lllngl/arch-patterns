@@ -1,4 +1,18 @@
-/* ===== Layout ===== */
+.login-oauth-block {
+  margin-bottom: 1rem;
+}
+
+.login-hint {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  margin-top: 0.75rem;
+  line-height: 1.4;
+}
+
+.login-hint code {
+  font-size: 0.75rem;
+}
+
 .login-page {
   height: 100vh;
   box-sizing: border-box;
@@ -18,9 +32,9 @@
   gap: 1.5rem;
 }
 
-/* ===== Card ===== */
 .login-card {
-  background: #ffffff;
+  background: var(--color-surface);
+  color: var(--color-fg);
   border-radius: 16px;
   padding: 2rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
@@ -38,7 +52,6 @@
   }
 }
 
-/* ===== Header ===== */
 .login-header {
   text-align: center;
   margin-bottom: 1.5rem;
@@ -47,17 +60,16 @@
 .login-title {
   font-size: 1.75rem;
   font-weight: 700;
-  color: #1a1a2e;
+  color: var(--color-fg);
   margin: 0 0 0.5rem;
 }
 
 .login-subtitle {
-  color: #6b7280;
+  color: var(--color-muted);
   font-size: 0.95rem;
   margin: 0;
 }
 
-/* ===== Form ===== */
 .login-form {
   display: flex;
   flex-direction: column;
@@ -73,23 +85,23 @@
 .form-label {
   font-size: 0.9rem;
   font-weight: 500;
-  color: #374151;
+  color: var(--color-fg-secondary);
 }
 
 .form-input {
   padding: 0.75rem 1rem;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 10px;
   font-size: 1rem;
   transition: all 0.2s ease;
-  background: #f9fafb;
-  color: #1a1a2e;
+  background: var(--color-surface-subtle);
+  color: var(--color-fg);
 }
 
 .form-input:focus {
   outline: none;
   border-color: #667eea;
-  background: #ffffff;
+  background: var(--color-surface);
   box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
@@ -102,7 +114,6 @@
   color: #9ca3af;
 }
 
-/* ===== Error ===== */
 .form-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
@@ -113,7 +124,6 @@
   text-align: center;
 }
 
-/* ===== Actions & Links ===== */
 .form-actions {
   text-align: right;
 }
@@ -133,7 +143,6 @@
   text-decoration: underline;
 }
 
-/* ===== Button ===== */
 .btn {
   padding: 0.85rem 1.5rem;
   border: none;
@@ -170,7 +179,6 @@
   width: 100%;
 }
 
-/* ===== Footer ===== */
 .login-footer {
   text-align: center;
 }
@@ -181,7 +189,6 @@
   margin: 0;
 }
 
-/* ===== Responsive ===== */
 @media (max-width: 480px) {
   .login-card {
     padding: 1.5rem;

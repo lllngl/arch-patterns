@@ -5,6 +5,5 @@ export const getInputValidationClass = (error?: string, success?: boolean): stri
 };
 
 export const sanitizeInputValue = (value: string): string => {
-  // Basic sanitization - remove potentially harmful characters
   return value.trim();
 };

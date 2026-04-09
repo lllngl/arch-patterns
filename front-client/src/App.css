@@ -3,3 +3,68 @@
   height: 100%;
   box-sizing: border-box;
 }
+
+.app-fallback {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--color-bg);
+}
+
+.app-fallback-card {
+  max-width: 480px;
+  width: 100%;
+  padding: 24px;
+  border-radius: 12px;
+  background: var(--color-surface);
+  color: var(--color-fg);
+  box-shadow: var(--shadow-card);
+}
+
+.app-fallback-title {
+  margin: 0 0 8px;
+  font-size: 1.25rem;
+  color: var(--color-fg);
+}
+
+.app-fallback-text {
+  margin: 0 0 16px;
+  color: var(--color-fg-secondary);
+}
+
+.app-fallback-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  cursor: pointer;
+  border: 1px solid transparent;
+}
+
+.button-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+}
+
+.button-secondary {
+  background: var(--color-surface);
+  color: var(--color-fg);
+  border-color: var(--color-input-border);
+}
+
+html[data-theme="dark"] .button-secondary {
+  background: #334155;
+  color: #e5e7eb;
+  border-color: #475569;
+}

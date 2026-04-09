@@ -29,9 +29,9 @@ export const usersApi = {
     return api.get<UserDTO>("/api/v1/users/profile");
   },
 
-  create(data: UserRegisterDTO, role: RoleName) {
+  create(data: UserRegisterDTO, roles: RoleName[]) {
     return api.post<UserDTO>("/api/v1/users/create", data, {
-      params: { role },
+      params: { roles },
     });
   },
 

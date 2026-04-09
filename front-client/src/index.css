@@ -2,12 +2,76 @@
   font-family: Inter, Arial, sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #111827;
-  background-color: #f3f4f6;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  /* Тема: светлая */
+  --color-fg: #111827;
+  --color-fg-secondary: #4b5563;
+  --color-muted: #6b7280;
+  --color-bg: #f3f4f6;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f9fafb;
+  --color-surface-muted: #f3f4f6;
+  --color-border: #e5e7eb;
+  --color-input-border: #d1d5db;
+  --color-code-bg: #f3f4f6;
+  --color-accent: #2563eb;
+  --shadow-card: 0 8px 20px rgba(0, 0, 0, 0.06);
+  --page-bg: #f3f4f6;
+  --toast-bg: #ffffff;
+  --toast-fg: #111827;
+
+  /* Баннеры статуса (инфо / ошибка / успех) */
+  --banner-info-bg: #eff6ff;
+  --banner-info-fg: #1d4ed8;
+  --banner-info-border: rgba(59, 130, 246, 0.35);
+  --banner-error-bg: #fef2f2;
+  --banner-error-fg: #b91c1c;
+  --banner-error-border: rgba(239, 68, 68, 0.35);
+  --banner-success-bg: #ecfdf5;
+  --banner-success-fg: #047857;
+  --banner-success-border: rgba(34, 197, 94, 0.35);
+
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+}
+
+html[data-theme="dark"] {
+  --color-fg: #e5e7eb;
+  --color-fg-secondary: #cbd5e1;
+  --color-muted: #9ca3af;
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-surface-subtle: #1e293b;
+  --color-surface-muted: #334155;
+  --color-border: #334155;
+  --color-input-border: #475569;
+  --color-code-bg: #0f172a;
+  --color-accent: #3b82f6;
+  --shadow-card: 0 8px 28px rgba(0, 0, 0, 0.45);
+  --page-bg: #0f172a;
+  --toast-bg: #1e293b;
+  --toast-fg: #e5e7eb;
+
+  --banner-info-bg: rgba(59, 130, 246, 0.15);
+  --banner-info-fg: #93c5fd;
+  --banner-info-border: rgba(59, 130, 246, 0.4);
+  --banner-error-bg: rgba(239, 68, 68, 0.12);
+  --banner-error-fg: #fca5a5;
+  --banner-error-border: rgba(239, 68, 68, 0.4);
+  --banner-success-bg: rgba(34, 197, 94, 0.12);
+  --banner-success-fg: #86efac;
+  --banner-success-border: rgba(34, 197, 94, 0.4);
+
+  color: var(--color-fg);
+  background-color: var(--color-bg);
+}
+
+html[data-theme="dark"] body {
+  background-color: var(--color-bg);
 }
 
 *,
@@ -20,4 +84,6 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
+  background-color: var(--color-bg);
+  color: var(--color-fg);
 }

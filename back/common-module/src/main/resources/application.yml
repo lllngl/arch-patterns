@@ -11,6 +11,9 @@ keycloak:
   server-url: ${KEYCLOAK_SERVER_URL:http://localhost:8081}
   realm: ${KEYCLOAK_REALM:internetbank}
 
+exchange-rate:
+  base-url: ${EXCHANGE_RATE_BASE_URL:https://open.er-api.com/v6/latest}
+
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr

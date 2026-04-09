@@ -1,11 +1,11 @@
 package com.internetbank.controller;
 
-import com.internetbank.common.dtos.UserDTO;
 import com.internetbank.common.dtos.page.PageRequestParams;
 import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.db.model.enums.LoanStatus;
 import com.internetbank.dto.request.CreateLoanRequest;
 import com.internetbank.dto.request.RepayLoanRequest;
+import com.internetbank.dto.response.CreditRatingResponse;
 import com.internetbank.dto.response.LoanResponse;
 import com.internetbank.service.LoanService;
 import jakarta.validation.Valid;
@@ -85,5 +85,18 @@ public class LoanController {
                                                                 @RequestParam(required = false) LoanStatus status,
                                                                 @AuthenticationPrincipal AuthenticatedUser user) {
         return ResponseEntity.ok(loanService.getMyLoans(user.getId(), pageParams, status, user));
+    }
+
+    @GetMapping("/credit-rating/user/{userId}")
+    @PreAuthorize("hasRole('EMPLOYEE')")
+    public ResponseEntity<CreditRatingResponse> getCreditRating(@PathVariable UUID userId,
+                                                                @AuthenticationPrincipal AuthenticatedUser user) {
+        return ResponseEntity.ok(loanService.getCreditRating(userId, user));
+    }
+
+    @GetMapping("/credit-rating/my")
+    @PreAuthorize("hasRole('CLIENT')")
+    public ResponseEntity<CreditRatingResponse> getMyCreditRating(@AuthenticationPrincipal AuthenticatedUser user) {
+        return ResponseEntity.ok(loanService.getCreditRating(user.getId(), user));
     }
 }

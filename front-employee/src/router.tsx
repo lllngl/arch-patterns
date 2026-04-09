@@ -1,6 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 import AppLayout from "./app/AppLayout";
 import { ProtectedRoute } from "./components/custom/ProtectedRoute";
+import { RouteErrorBoundary } from "./components/custom/RouteErrorBoundary";
+import AuthCallbackPage from "./pages/AuthCallbackPage/AuthCallbackPage";
 import ErrorPage from "./pages/ErrorPage/ErrorPage";
 import LoginPage from "./pages/LoginPage/LoginPage";
 import MainPage from "./pages/MainPage/MainPage";
@@ -19,9 +21,11 @@ export type RouteHandle = {
 
 export const router = createBrowserRouter([
   {
+    errorElement: <RouteErrorBoundary />,
     element: <ProtectedRoute />,
     children: [
       {
+        errorElement: <RouteErrorBoundary />,
         element: <AppLayout />,
         children: [
           {
@@ -91,6 +95,11 @@ export const router = createBrowserRouter([
   {
     path: "login",
     element: <LoginPage />,
+  },
+  {
+    path: "auth/callback",
+    element: <AuthCallbackPage />,
+    errorElement: <RouteErrorBoundary />,
   },
   {
     path: "error/:code",

@@ -18,6 +18,8 @@ public interface LoanRepository extends JpaRepository<Loan, UUID> {
 
     Page<Loan> findByUserId(UUID userId, Pageable pageable);
 
+    List<Loan> findByUserId(UUID userId);
+
     Page<Loan> findByUserIdAndStatus(UUID userId, LoanStatus status, Pageable pageable);
 
     List<Loan> findByUserIdAndStatus(UUID userId, LoanStatus status);

@@ -16,6 +16,7 @@ public interface LoanMapper {
     @Mapping(source = "loan.amount", target = "amount")
     @Mapping(source = "loan.termMonths", target = "termMonths")
     @Mapping(source = "loan.status", target = "status")
+    @Mapping(source = "loan.currencyCode", target = "currency")
     @Mapping(source = "loan.paymentType", target = "paymentType")
     @Mapping(source = "loan.monthlyPayment", target = "monthlyPayment")
     @Mapping(source = "loan.remainingAmount", target = "remainingAmount")
