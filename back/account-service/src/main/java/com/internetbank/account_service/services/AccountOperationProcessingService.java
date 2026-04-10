@@ -89,6 +89,8 @@ public class AccountOperationProcessingService {
 
         applicationEventPublisher.publishEvent(new AccountTransactionsInvalidationEvent(
                 command.commandId(),
+                command.type(),
+                command.initiator().userId(),
                 affectedAccountIds,
                 LocalDateTime.now()
         ));

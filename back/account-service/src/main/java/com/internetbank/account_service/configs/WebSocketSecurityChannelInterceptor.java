@@ -1,6 +1,7 @@
 package com.internetbank.account_service.configs;
 
 import com.internetbank.account_service.services.AccountRealtimeAccessService;
+import com.internetbank.common.enums.RoleName;
 import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.common.security.KeycloakJwtAuthenticationConverter;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,8 @@ public class WebSocketSecurityChannelInterceptor implements ChannelInterceptor {
 
     private static final String ACCOUNT_TRANSACTIONS_DESTINATION_PREFIX = "/topic/accounts/";
     private static final String ACCOUNT_TRANSACTIONS_DESTINATION_SUFFIX = "/transactions";
+    private static final String EMPLOYEE_ALL_OPERATIONS_DESTINATION = "/topic/employee/operations";
+
     private final JwtDecoder jwtDecoder;
     private final KeycloakJwtAuthenticationConverter keycloakJwtAuthenticationConverter;
     private final AccountRealtimeAccessService accountRealtimeAccessService;
@@ -50,8 +53,15 @@ public class WebSocketSecurityChannelInterceptor implements ChannelInterceptor {
                 throw new AccessDeniedException("Authentication is required for WebSocket subscriptions.");
             }
 
-            UUID accountId = extractAccountId(accessor.getDestination());
-            accountRealtimeAccessService.ensureCanSubscribe(accountId, authenticatedUser);
+            String destination = accessor.getDestination();
+            if (EMPLOYEE_ALL_OPERATIONS_DESTINATION.equals(destination)) {
+                if (!authenticatedUser.hasRole(RoleName.EMPLOYEE)) {
+                    throw new AccessDeniedException("Only employees can subscribe to all operations.");
+                }
+            } else {
+                UUID accountId = extractAccountId(destination);
+                accountRealtimeAccessService.ensureCanSubscribe(accountId, authenticatedUser);
+            }
         }
 
         if (StompCommand.DISCONNECT.equals(accessor.getCommand()) && accessor.getSessionId() != null) {

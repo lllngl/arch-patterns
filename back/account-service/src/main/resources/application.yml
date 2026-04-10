@@ -81,6 +81,7 @@ app:
   websocket:
     endpoint: /ws
     account-transactions-destination-prefix: /topic/accounts
+    employee-operations-destination: /topic/employee/operations
 
 logging:
   pattern:

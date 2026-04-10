@@ -1,0 +1,16 @@
+services:
+  db:
+    container_name: monitoring-db
+    image: postgres:17
+    hostname: monitoring-db
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=monitoring
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5439:5432"
+
+volumes:
+  db-data:

@@ -1,14 +1,18 @@
 package com.internetbank.common.clients;
 
-import com.internetbank.common.exceptions.*;
+import com.internetbank.common.exceptions.InternalServerErrorException;
 import com.internetbank.common.exceptions.BadRequestException;
 import com.internetbank.common.exceptions.ForbiddenException;
 import com.internetbank.common.exceptions.NotFoundException;
 import com.internetbank.common.exceptions.UnauthorizedException;
-import feign.*;
+import com.internetbank.common.telemetry.TraceContext;
+import feign.Client;
+import feign.RequestInterceptor;
+import feign.Response;
 import feign.httpclient.ApacheHttpClient;
 import feign.codec.ErrorDecoder;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +40,10 @@ public class SecurityFeignClientConfig {
                 if (credentials instanceof String jwtToken && !jwtToken.isBlank()) {
                     template.header("Authorization", "Bearer " + jwtToken);
                 }
+            }
+            String traceId = MDC.get(TraceContext.MDC_KEY);
+            if (traceId != null && !traceId.isBlank()) {
+                template.header(TraceContext.HEADER_NAME, traceId);
             }
             template.header("X-Internal-Request", internalApiKey);
         };
