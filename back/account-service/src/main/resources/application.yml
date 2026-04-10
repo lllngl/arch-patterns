@@ -30,14 +30,25 @@ spring:
       auto-offset-reset: earliest
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      consumer:
+        enable-auto-commit: false
+        max-poll-records: 10
+        properties:
+          retry.backoff.ms: 1000
+      listener:
+        ack-mode: manual
       properties:
         spring.json.trusted.packages: "com.internetbank.account_service.messaging"
         spring.json.value.default.type: com.internetbank.account_service.messaging.AccountOperationCommand
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      retries: 3
       properties:
         spring.json.add.type.headers: false
+        retry.backoff.ms: 500
+        enable.idempotence: true
+        max.in.flight.requests.per.connection: 5
   security:
     oauth2:
       resourceserver:
@@ -78,3 +89,25 @@ logging:
     root: INFO
     com.internetbank: DEBUG
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      kafka-producer:
+        slidingWindowSize: 10
+        failureRateThreshold: 70
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+  retry:
+    instances:
+      kafka-producer:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - org.apache.kafka.common.errors.TimeoutException
+          - org.springframework.kafka.core.KafkaProducerException
+      kafka-consumer:
+        maxAttempts: 3
+        waitDuration: 1s
+        retryExceptions:
+          - org.springframework.dao.DataAccessException
+          - java.sql.SQLException

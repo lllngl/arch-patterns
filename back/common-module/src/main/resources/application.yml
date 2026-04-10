@@ -17,3 +17,32 @@ exchange-rate:
 internal:
   api:
     key: uYuQ8lwlpZbVmZB4u8U8DWZJiLojIaGr
+
+feign:
+  circuitbreaker:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 5000
+        readTimeout: 5000
+        loggerLevel: basic
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      default:
+        slidingWindowSize: 10
+        failureRateThreshold: 70
+        waitDurationInOpenState: 30s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+  retry:
+    instances:
+      default:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - feign.FeignException
+          - java.net.SocketTimeoutException
+          - com.internetbank.common.exceptions.InternalServerErrorException
