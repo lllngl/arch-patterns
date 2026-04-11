@@ -15,13 +15,12 @@ import java.util.concurrent.ThreadLocalRandom;
 @Component
 public class FaultSimulator {
 
-    @Around("@within(org.springframework.web.bind.annotation.RestController) || " +
-            "@within(org.springframework.stereotype.Service)")
+    @Around("@within(org.springframework.web.bind.annotation.RestController)")
     public Object simulateFault(ProceedingJoinPoint joinPoint) throws Throwable {
         int errorRate = getCurrentErrorRate();
         int roll = ThreadLocalRandom.current().nextInt(100);
 
-        if (roll < errorRate) {
+        if (roll >= errorRate) {
             String className = joinPoint.getSignature().getDeclaringType().getSimpleName();
             String methodName = joinPoint.getSignature().getName();
 
