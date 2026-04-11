@@ -20,7 +20,7 @@ public class FaultSimulator {
         int errorRate = getCurrentErrorRate();
         int roll = ThreadLocalRandom.current().nextInt(100);
 
-        if (roll >= errorRate) {
+        if (roll < errorRate) {
             String className = joinPoint.getSignature().getDeclaringType().getSimpleName();
             String methodName = joinPoint.getSignature().getName();
 
