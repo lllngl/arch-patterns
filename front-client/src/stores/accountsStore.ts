@@ -17,6 +17,8 @@ import { tokenStorage } from "../auth/tokenStorage";
 
 interface AccountsState {
   accounts: AccountDTO[];
+  /** Set when accounts are loaded; used to refresh balances after async ops (e.g. loan scheduler → withdraw → WS). */
+  accountsOwnerUserId: string | null;
   selectedAccountId: string;
   transactions: AccountTransactionDTO[];
   isLoading: boolean;
@@ -39,6 +41,7 @@ interface AccountsState {
 
 export const useAccountsStore = create<AccountsState>((set, get) => ({
   accounts: [],
+  accountsOwnerUserId: null,
   selectedAccountId: "",
   transactions: [],
   isLoading: false,
@@ -53,7 +56,7 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     try {
       const page = await fetchUserAccounts(userId, { size: 100, sortBy: "createdAt", sortDir: "DESC" });
       const loaded = page.content;
-      set({ accounts: loaded });
+      set({ accounts: loaded, accountsOwnerUserId: userId });
       const { selectedAccountId } = get();
       if (loaded.length === 0) {
         set({ selectedAccountId: "" });
@@ -100,7 +103,13 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
       accountId,
       accessToken,
       onTransactionsInvalidated: (id) => {
-        void get().loadTransactions(id);
+        const uid = get().accountsOwnerUserId;
+        void (async () => {
+          await get().loadTransactions(id);
+          if (uid) {
+            await get().loadAccounts(uid);
+          }
+        })();
       },
       onError: () => {
         useNotificationStore.getState().pushToast("info", "Онлайн-обновление операций недоступно.");

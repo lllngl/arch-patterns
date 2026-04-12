@@ -2,6 +2,10 @@ import { tokenStorage } from "../auth/tokenStorage";
 import { authResponseSchema } from "../contracts/schemas/authSchemas";
 import type { AuthResponse } from "../contracts/auth";
 import { HttpClient } from "./httpClient";
+import {
+  applyRequestMetadataHeaders,
+  createRequestMetadata,
+} from "./requestMetadata";
 
 async function refreshAccessToken(): Promise<string | null> {
   const refreshToken = tokenStorage.getRefreshToken();
@@ -11,9 +15,15 @@ async function refreshAccessToken(): Promise<string | null> {
   }
 
   try {
+    const metadata = createRequestMetadata("/api/v1/auth/refresh", "POST");
+    const headers = new Headers({
+      "Content-Type": "application/json",
+    });
+    applyRequestMetadataHeaders(headers, metadata);
+
     const response = await fetch("/api/v1/auth/refresh", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ refreshToken }),
     });
 

@@ -45,8 +45,6 @@ export const MainPage = () => {
   const lastError = useAccountsStore((s) => s.lastError);
   const loadAccounts = useAccountsStore((s) => s.loadAccounts);
   const loadTransactions = useAccountsStore((s) => s.loadTransactions);
-  const subscribeTransactionsChannel = useAccountsStore((s) => s.subscribeTransactionsChannel);
-  const unsubscribeTransactionsChannel = useAccountsStore((s) => s.unsubscribeTransactionsChannel);
   const createAccount = useAccountsStore((s) => s.createAccount);
   const closeAccount = useAccountsStore((s) => s.closeAccount);
   const deposit = useAccountsStore((s) => s.deposit);
@@ -88,11 +86,7 @@ export const MainPage = () => {
       return;
     }
     void loadTransactions(selectedAccountId);
-    subscribeTransactionsChannel(selectedAccountId);
-    return () => {
-      unsubscribeTransactionsChannel();
-    };
-  }, [selectedAccountId, loadTransactions, subscribeTransactionsChannel, unsubscribeTransactionsChannel]);
+  }, [selectedAccountId, loadTransactions]);
 
   const handleCreateAccount = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

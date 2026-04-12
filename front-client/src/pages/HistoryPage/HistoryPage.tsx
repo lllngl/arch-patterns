@@ -30,8 +30,6 @@ export const HistoryPage = () => {
   const selectAccount = useAccountsStore((s) => s.selectAccount);
   const loadAccounts = useAccountsStore((s) => s.loadAccounts);
   const loadTransactions = useAccountsStore((s) => s.loadTransactions);
-  const subscribeTransactionsChannel = useAccountsStore((s) => s.subscribeTransactionsChannel);
-  const unsubscribeTransactionsChannel = useAccountsStore((s) => s.unsubscribeTransactionsChannel);
   const isLoading = useAccountsStore((s) => s.isLoading);
   const lastError = useAccountsStore((s) => s.lastError);
 
@@ -63,16 +61,6 @@ export const HistoryPage = () => {
     }
     void loadTransactions(selectedAccountId);
   }, [selectedAccountId, loadTransactions]);
-
-  useEffect(() => {
-    if (!selectedAccountId) {
-      return;
-    }
-    subscribeTransactionsChannel(selectedAccountId);
-    return () => {
-      unsubscribeTransactionsChannel();
-    };
-  }, [selectedAccountId, subscribeTransactionsChannel, unsubscribeTransactionsChannel]);
 
   return (
     <section className="history-page">

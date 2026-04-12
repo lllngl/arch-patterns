@@ -1,6 +1,7 @@
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { useAppSettingsStore } from "../stores/appSettingsStore";
+import { AccountTransactionsRealtime } from "./AccountTransactionsRealtime";
 import { ToastStack } from "../ui/ToastStack/ToastStack";
 import "./AppLayout.css";
 import "../ui/ToastStack/ToastStack.css";
@@ -18,6 +19,7 @@ export const AppLayout = () => {
 
   return (
     <div className="app-layout">
+      <AccountTransactionsRealtime />
       <header className="header">
         <div className="header-container">
           <Link to="/" className="logo">

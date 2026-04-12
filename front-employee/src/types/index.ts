@@ -189,3 +189,36 @@ export interface UpdatePreferencesRequest {
   theme?: PreferenceTheme;
   hiddenAccountIds?: string[];
 }
+
+export type TelemetrySource = "BACKEND" | "FRONTEND";
+
+export interface TelemetrySummaryResponse {
+  serviceName: string;
+  from: string;
+  to: string;
+  totalRequests: number;
+  errorRequests: number;
+  errorRatePercent: number;
+  averageDurationMs: number;
+  maxDurationMs: number;
+}
+
+export interface TelemetryTimelinePointResponse {
+  bucketStart: string;
+  totalRequests: number;
+  errorRequests: number;
+  errorRatePercent: number;
+  averageDurationMs: number;
+  maxDurationMs: number;
+}
+
+export interface RecentTelemetryErrorResponse {
+  traceId: string;
+  serviceName: string;
+  method: string;
+  path: string;
+  statusCode: number;
+  durationMs: number;
+  errorMessage: string | null;
+  occurredAt: string;
+}
