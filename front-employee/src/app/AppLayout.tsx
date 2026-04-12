@@ -22,6 +22,7 @@ import {
   UserIcon,
   Percent,
   Banknote,
+  Activity,
 } from "lucide-react";
 
 const items = [
@@ -54,6 +55,11 @@ const items = [
     title: "Профиль",
     url: "/profile",
     icon: UserIcon,
+  },
+  {
+    title: "Мониторинг",
+    url: "/monitoring",
+    icon: Activity,
   },
 ];
 

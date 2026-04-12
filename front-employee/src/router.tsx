@@ -14,6 +14,7 @@ import AccountDetailPage from "./pages/AccountDetailPage/AccountDetailPage";
 import TariffsPage from "./pages/TariffsPage/TariffsPage";
 import LoansPage from "./pages/LoansPage/LoansPage";
 import LoanDetailPage from "./pages/LoanDetailPage/LoanDetailPage";
+import MonitoringPage from "./pages/MonitoringPage/MonitoringPage";
 
 export type RouteHandle = {
   breadcrumb?: string | ((params: Record<string, string>) => string);
@@ -86,6 +87,11 @@ export const router = createBrowserRouter([
                 handle: { breadcrumb: "Детали" },
               },
             ],
+          },
+          {
+            path: "monitoring",
+            element: <MonitoringPage />,
+            handle: { breadcrumb: "Мониторинг" },
           },
         ],
       },

@@ -1,8 +1,8 @@
-import { appEnv } from "@/config/env";
+import { appEnv } from "../config/env";
 import {
   applyRequestMetadataHeaders,
   createRequestMetadata,
-} from "./request-metadata";
+} from "./requestMetadata";
 
 type TelemetryEventType =
   | "http_request"
@@ -67,33 +67,6 @@ function getChannel(event: TelemetryEvent) {
   return "http";
 }
 
-function getPath(event: TelemetryEvent) {
-  return event.url ?? window.location.pathname;
-}
-
-function getMethod(event: TelemetryEvent) {
-  return event.method ?? "CLIENT";
-}
-
-function getDurationMs(event: TelemetryEvent) {
-  return event.durationMs ?? 0;
-}
-
-function isErrorEvent(event: TelemetryEvent) {
-  if (event.success === false) {
-    return true;
-  }
-
-  if (event.status != null) {
-    return event.status >= 400;
-  }
-
-  return (
-    event.type === "circuit_breaker_opened" ||
-    event.type === "circuit_breaker_blocked"
-  );
-}
-
 function shouldTrackEvent(event: Omit<TelemetryEvent, "timestamp">) {
   if (
     event.type === "circuit_breaker_opened" ||
@@ -112,8 +85,6 @@ function shouldTrackEvent(event: Omit<TelemetryEvent, "timestamp">) {
     if (event.status != null) {
       return event.status >= 400;
     }
-
-    return false;
   }
 
   return false;
@@ -124,16 +95,20 @@ function mapTelemetryEvent(
 ): FrontendTelemetryEventRequest {
   return {
     traceId: event.traceId,
-    serviceName: event.service ?? "front-employee",
+    serviceName: event.service ?? "front-client",
     eventType: event.type,
-    path: getPath(event),
-    method: getMethod(event),
+    path: event.url ?? window.location.pathname,
+    method: event.method ?? "CLIENT",
     statusCode: event.status,
-    durationMs: getDurationMs(event),
+    durationMs: event.durationMs ?? 0,
     retryCount: event.retryCount,
     shortCircuited: event.type === "circuit_breaker_blocked",
     channel: getChannel(event),
-    error: isErrorEvent(event),
+    error:
+      event.success === false ||
+      (event.status != null && event.status >= 400) ||
+      event.type === "circuit_breaker_opened" ||
+      event.type === "circuit_breaker_blocked",
     errorMessage: event.message,
     occurredAt: event.timestamp,
   };
@@ -150,9 +125,7 @@ function scheduleFlush() {
   }, appEnv.monitoringFlushIntervalMs);
 }
 
-export function enqueueTelemetry(
-  event: Omit<TelemetryEvent, "timestamp">
-) {
+export function enqueueTelemetry(event: Omit<TelemetryEvent, "timestamp">) {
   if (!appEnv.monitoringIngestUrl || !shouldTrackEvent(event)) {
     return;
   }
@@ -177,8 +150,7 @@ export async function flushTelemetry() {
 
   isFlushing = true;
   const batch = queue.splice(0, appEnv.monitoringBatchSize);
-  const accessToken =
-    typeof window === "undefined" ? null : window.localStorage.getItem("accessToken");
+  const accessToken = window.localStorage.getItem("accessToken");
 
   try {
     const results = await Promise.allSettled(
@@ -188,13 +160,18 @@ export async function flushTelemetry() {
           "POST",
           event.traceId ? { traceId: event.traceId } : undefined
         );
+        const headers = new Headers({
+          "Content-Type": "application/json",
+        });
+
+        if (accessToken) {
+          headers.set("Authorization", `Bearer ${accessToken}`);
+        }
+        applyRequestMetadataHeaders(headers, metadata);
+
         const response = await fetch(appEnv.monitoringIngestUrl!, {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-            ...applyRequestMetadataHeaders({}, metadata),
-          },
+          headers,
           body: JSON.stringify(mapTelemetryEvent(event)),
           keepalive: true,
         });
@@ -217,7 +194,6 @@ export async function flushTelemetry() {
     queue.unshift(...batch.slice(-100));
   } finally {
     isFlushing = false;
-
     if (queue.length > 0) {
       scheduleFlush();
     }
@@ -230,7 +206,6 @@ export function initializeTelemetryLifecycle() {
   }
 
   lifecycleInitialized = true;
-
   window.addEventListener("pagehide", () => {
     void flushTelemetry();
   });

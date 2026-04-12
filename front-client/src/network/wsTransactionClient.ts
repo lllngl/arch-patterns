@@ -1,4 +1,5 @@
 import { Client } from "@stomp/stompjs";
+import { enqueueTelemetry } from "./telemetry";
 
 export interface AccountTransactionsWsOptions {
   accountId: string;
@@ -24,6 +25,12 @@ export class WsTransactionClient {
   connect(): void {
     const url = brokerWsUrl();
     if (!url || !this.options.accessToken) {
+      enqueueTelemetry({
+        type: "realtime",
+        service: "account-service-realtime",
+        state: "disabled",
+        message: "WebSocket url or access token is missing.",
+      });
       return;
     }
 
@@ -36,6 +43,13 @@ export class WsTransactionClient {
       heartbeatIncoming: 10000,
       heartbeatOutgoing: 10000,
       onConnect: () => {
+        enqueueTelemetry({
+          type: "realtime",
+          service: "account-service-realtime",
+          state: "connected",
+          message: "Account transactions realtime channel connected.",
+        });
+
         client.subscribe(`/topic/accounts/${this.options.accountId}/transactions`, (message) => {
           try {
             const raw: unknown = JSON.parse(message.body);
@@ -44,6 +58,15 @@ export class WsTransactionClient {
             }
             const rec = raw as Record<string, unknown>;
             if (rec.eventType === "TRANSACTIONS_INVALIDATED" && typeof rec.accountId === "string") {
+              enqueueTelemetry({
+                type: "realtime",
+                service: "account-service-realtime",
+                state: "connected",
+                message: "Received transaction invalidation event.",
+                details: {
+                  accountId: rec.accountId,
+                },
+              });
               this.options.onTransactionsInvalidated(rec.accountId);
             }
           } catch (err) {
@@ -52,9 +75,21 @@ export class WsTransactionClient {
         });
       },
       onStompError: (frame) => {
+        enqueueTelemetry({
+          type: "realtime",
+          service: "account-service-realtime",
+          state: "error",
+          message: frame.headers.message ?? "STOMP error",
+        });
         this.options.onError?.(new Error(frame.headers.message ?? "STOMP error"));
       },
       onWebSocketError: () => {
+        enqueueTelemetry({
+          type: "realtime",
+          service: "account-service-realtime",
+          state: "error",
+          message: "WebSocket transport error.",
+        });
         this.options.onError?.(new Error("WebSocket error"));
       },
     });
