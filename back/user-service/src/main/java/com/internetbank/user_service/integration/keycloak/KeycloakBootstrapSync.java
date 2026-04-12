@@ -24,11 +24,11 @@ public class KeycloakBootstrapSync implements ApplicationRunner {
         syncUnsyncedUsers();
     }
 
-//    @Scheduled(fixedDelayString = "${keycloak.bootstrap.retry-delay-ms:60000}")
-//    @Transactional
-//    public void retryUnsyncedUsers() {
-//        syncUnsyncedUsers();
-//    }
+    @Scheduled(fixedDelayString = "${keycloak.bootstrap.retry-delay-ms:60000}")
+   @Transactional
+    public void retryUnsyncedUsers() {
+        syncUnsyncedUsers();
+   }
 
     private void syncUnsyncedUsers() {
         for (User user : userRepository.findAll()) {

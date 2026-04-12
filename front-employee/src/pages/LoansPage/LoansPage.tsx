@@ -21,11 +21,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { loansApi } from "@/api/loans";
 import type { LoansFilterParams } from "@/api/loans";
 import type { LoanResponse, LoanStatus, Page } from "@/types";
-import { toast } from "sonner";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { getErrorMessage } from "@/lib/http-error";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  dismissRequestToast,
+  showRequestErrorToast,
+} from "@/lib/request-feedback";
 
 const PAGE_SIZE = 10;
+const LOANS_PAGE_ERROR_TOAST_ID = "loans-page-load-error";
 
 const STATUS_LABELS: Record<LoanStatus, string> = {
   PENDING: "Ожидает",
@@ -52,6 +56,7 @@ export default function LoansPage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchLoans = useCallback(async () => {
     setLoading(true);
@@ -65,8 +70,10 @@ export default function LoansPage() {
       if (statusFilter !== "all") params.status = statusFilter as LoanStatus;
       const { data } = await loansApi.getAll(params);
       setData(data);
+      setLoadError(null);
+      dismissRequestToast(LOANS_PAGE_ERROR_TOAST_ID);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      setLoadError(showRequestErrorToast(error, LOANS_PAGE_ERROR_TOAST_ID));
     } finally {
       setLoading(false);
     }
@@ -109,6 +116,18 @@ export default function LoansPage() {
         </Select>
       </div>
 
+      {loadError && (
+        <Alert>
+          <AlertTitle>Не удалось обновить список кредитов</AlertTitle>
+          <AlertDescription>
+            {data
+              ? "Показываем последние успешно загруженные данные. "
+              : ""}
+            {loadError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -123,7 +142,7 @@ export default function LoansPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loading && !data ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
                   {Array.from({ length: 7 }).map((_, j) => (
@@ -178,6 +197,10 @@ export default function LoansPage() {
           </TableBody>
         </Table>
       </div>
+
+      {loading && data && (
+        <p className="text-sm text-muted-foreground">Обновляем список кредитов...</p>
+      )}
 
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">

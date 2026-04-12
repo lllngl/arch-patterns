@@ -1,31 +1,40 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useAuthStore } from "@/stores/auth";
 import { Users, Wallet, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { toast } from "sonner";
 import { loadDashboardStats, type DashboardStats } from "@/use-cases/dashboard/load-dashboard-stats";
-import { getErrorMessage } from "@/lib/http-error";
+import {
+  dismissRequestToast,
+  showRequestErrorToast,
+} from "@/lib/request-feedback";
+
+const DASHBOARD_ERROR_TOAST_ID = "dashboard-stats-load-error";
 
 export default function MainPage() {
   const user = useAuthStore((s) => s.user);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  const fetchStats = useCallback(async () => {
+    try {
+      setStats(await loadDashboardStats());
+      setLoadError(null);
+      dismissRequestToast(DASHBOARD_ERROR_TOAST_ID);
+    } catch (error) {
+      setLoadError(showRequestErrorToast(error, DASHBOARD_ERROR_TOAST_ID));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    async function fetchStats() {
-      try {
-        setStats(await loadDashboardStats());
-      } catch (error) {
-        toast.error(getErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchStats();
-  }, []);
+    void fetchStats();
+  }, [fetchStats]);
 
   return (
     <div className="p-6 space-y-6">
@@ -38,6 +47,16 @@ export default function MainPage() {
         </p>
       </div>
 
+      {loadError && (
+        <Alert>
+          <AlertTitle>Не удалось обновить сводку</AlertTitle>
+          <AlertDescription>
+            {stats ? "Показываем последние доступные данные. " : ""}
+            {loadError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -45,7 +64,7 @@ export default function MainPage() {
             <Users className="text-muted-foreground size-4" />
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {loading && !stats ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <div className="text-2xl font-bold">
@@ -64,7 +83,7 @@ export default function MainPage() {
             <Wallet className="text-muted-foreground size-4" />
           </CardHeader>
           <CardContent>
-            {loading ? (
+            {loading && !stats ? (
               <Skeleton className="h-8 w-20" />
             ) : (
               <div className="text-2xl font-bold">

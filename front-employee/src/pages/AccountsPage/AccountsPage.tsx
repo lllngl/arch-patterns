@@ -21,12 +21,17 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { accountsApi } from "@/api/accounts";
 import type { AccountsFilterParams } from "@/api/accounts";
 import type { AccountDTO, AccountStatus, Page } from "@/types";
-import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Eye, EyeOff } from "lucide-react";
 import { useAppSettingsStore } from "@/stores/app-settings";
-import { getErrorMessage } from "@/lib/http-error";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  dismissRequestToast,
+  showRequestErrorToast,
+} from "@/lib/request-feedback";
+import { EMPLOYEE_OPERATION_EVENT_NAME } from "@/network/ws/account-transactions";
 
 const PAGE_SIZE = 10;
+const ACCOUNTS_PAGE_ERROR_TOAST_ID = "accounts-page-load-error";
 
 const STATUS_LABELS: Record<string, string> = {
   OPEN: "Открыт",
@@ -42,6 +47,7 @@ export default function AccountsPage() {
   const hiddenAccountIds = useAppSettingsStore((state) => state.hiddenAccountIds);
   const isAccountHidden = useAppSettingsStore((state) => state.isAccountHidden);
   const [showHiddenAccounts, setShowHiddenAccounts] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
@@ -57,8 +63,10 @@ export default function AccountsPage() {
       }
       const { data } = await accountsApi.getAll(params);
       setData(data);
+      setLoadError(null);
+      dismissRequestToast(ACCOUNTS_PAGE_ERROR_TOAST_ID);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      setLoadError(showRequestErrorToast(error, ACCOUNTS_PAGE_ERROR_TOAST_ID));
     } finally {
       setLoading(false);
     }
@@ -71,6 +79,20 @@ export default function AccountsPage() {
 
   useEffect(() => {
     fetchAccounts();
+  }, [fetchAccounts]);
+
+  useEffect(() => {
+    function handleEmployeeOperation() {
+      void fetchAccounts();
+    }
+
+    window.addEventListener(EMPLOYEE_OPERATION_EVENT_NAME, handleEmployeeOperation);
+    return () => {
+      window.removeEventListener(
+        EMPLOYEE_OPERATION_EVENT_NAME,
+        handleEmployeeOperation
+      );
+    };
   }, [fetchAccounts]);
 
   return (
@@ -106,6 +128,18 @@ export default function AccountsPage() {
         </Button>
       </div>
 
+      {loadError && (
+        <Alert>
+          <AlertTitle>Не удалось обновить список счетов</AlertTitle>
+          <AlertDescription>
+            {data
+              ? "Показываем последние успешно загруженные данные. "
+              : ""}
+            {loadError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -118,7 +152,7 @@ export default function AccountsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loading && !data ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
                   {Array.from({ length: 5 }).map((_, j) => (
@@ -197,6 +231,10 @@ export default function AccountsPage() {
           </TableBody>
         </Table>
       </div>
+
+      {loading && data && (
+        <p className="text-sm text-muted-foreground">Обновляем список счетов...</p>
+      )}
 
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">

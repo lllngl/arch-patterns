@@ -23,12 +23,16 @@ import { usersApi } from "@/api/users";
 import type { UsersFilterParams } from "@/api/users";
 import type { Page, UserDTO } from "@/types";
 import { CreateUserDialog } from "./CreateUserDialog";
-import { toast } from "sonner";
 import { ChevronLeft, ChevronRight, Search } from "lucide-react";
-import { getErrorMessage } from "@/lib/http-error";
 import { RoleBadges } from "@/components/custom/RoleBadges";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  dismissRequestToast,
+  showRequestErrorToast,
+} from "@/lib/request-feedback";
 
 const PAGE_SIZE = 10;
+const USERS_PAGE_ERROR_TOAST_ID = "users-page-load-error";
 
 export default function UsersPage() {
   const navigate = useNavigate();
@@ -37,6 +41,7 @@ export default function UsersPage() {
   const [page, setPage] = useState(0);
   const [emailFilter, setEmailFilter] = useState("");
   const [blockedFilter, setBlockedFilter] = useState<string>("all");
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -51,8 +56,10 @@ export default function UsersPage() {
       if (blockedFilter !== "all") params.isBlocked = blockedFilter === "true";
       const { data } = await usersApi.getAll(params);
       setData(data);
+      setLoadError(null);
+      dismissRequestToast(USERS_PAGE_ERROR_TOAST_ID);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      setLoadError(showRequestErrorToast(error, USERS_PAGE_ERROR_TOAST_ID));
     } finally {
       setLoading(false);
     }
@@ -103,6 +110,18 @@ export default function UsersPage() {
         </Select>
       </div>
 
+      {loadError && (
+        <Alert>
+          <AlertTitle>Не удалось обновить список пользователей</AlertTitle>
+          <AlertDescription>
+            {data
+              ? "Показываем последние успешно загруженные данные. "
+              : ""}
+            {loadError}
+          </AlertDescription>
+        </Alert>
+      )}
+
       <div className="border rounded-md">
         <Table>
           <TableHeader>
@@ -115,7 +134,7 @@ export default function UsersPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {loading ? (
+            {loading && !data ? (
               Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
                   {Array.from({ length: 5 }).map((_, j) => (
@@ -169,6 +188,10 @@ export default function UsersPage() {
           </TableBody>
         </Table>
       </div>
+
+      {loading && data && (
+        <p className="text-sm text-muted-foreground">Обновляем список пользователей...</p>
+      )}
 
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">

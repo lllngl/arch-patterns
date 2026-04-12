@@ -1,0 +1,9 @@
+{
+  "name": "front-employee",
+  "short_name": "employee",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "description": "Employee banking frontend with realtime and push notification scaffolding."
+}

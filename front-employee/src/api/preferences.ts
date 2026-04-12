@@ -37,6 +37,19 @@ export const preferencesApi = {
     });
   },
 
+  registerPushToken(deviceId: string, pushToken: string) {
+    return api.put<UserPreferencesResponse>(
+      `/api/v1/preferences/devices/${deviceId}/push-token`,
+      {
+        pushToken,
+      }
+    );
+  },
+
+  unregisterPushToken(deviceId: string) {
+    return api.delete(`/api/v1/preferences/devices/${deviceId}/push-token`);
+  },
+
   update(deviceId: string, data: UpdatePreferencesRequest) {
     return api.patch<UserPreferencesResponse>("/api/v1/preferences", data, {
       headers: buildHeaders(deviceId),

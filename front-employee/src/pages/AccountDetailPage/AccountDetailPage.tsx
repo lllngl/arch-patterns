@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -42,8 +43,14 @@ import { HiddenAccountToggle } from "@/components/custom/HiddenAccountToggle";
 import { LiveConnectionBadge } from "@/components/custom/LiveConnectionBadge";
 import { getErrorMessage } from "@/lib/http-error";
 import { useLiveAccountTransactions } from "@/use-cases/accounts/use-live-account-transactions";
+import {
+  dismissRequestToast,
+  showRequestErrorToast,
+} from "@/lib/request-feedback";
 
 const PAGE_SIZE = 15;
+const ACCOUNT_DETAIL_ERROR_TOAST_ID = "account-detail-load-error";
+const ACCOUNT_TRANSACTIONS_ERROR_TOAST_ID = "account-transactions-load-error";
 
 const STATUS_LABELS: Record<string, string> = {
   OPEN: "Открыт",
@@ -54,6 +61,30 @@ const TYPE_LABELS: Record<string, string> = {
   INCOME: "Пополнение",
   EXPENSE: "Списание",
 };
+
+const LIVE_CONNECTION_MESSAGES = {
+  connected: null,
+  connecting: {
+    title: "Realtime подключается",
+    description:
+      "События по операциям скоро начнут приходить через WebSocket/STOMP.",
+  },
+  idle: {
+    title: "Realtime сейчас неактивен",
+    description:
+      "Соединение закрыто. История операций продолжает загружаться через REST.",
+  },
+  disabled: {
+    title: "Realtime отключён",
+    description:
+      "Не хватает токена или WebSocket URL. Экран работает в режиме REST only.",
+  },
+  error: {
+    title: "Ошибка WebSocket",
+    description:
+      "Push invalidation недоступен. Пока backend не восстановится, список обновляется только через REST.",
+  },
+} as const;
 
 export default function AccountDetailPage() {
   const { accountId } = useParams<{ accountId: string }>();
@@ -67,16 +98,32 @@ export default function AccountDetailPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [accountLoadError, setAccountLoadError] = useState<string | null>(null);
+  const [transactionsLoadError, setTransactionsLoadError] = useState<string | null>(
+    null
+  );
+
+  const fetchAccount = useCallback(async () => {
+    if (!accountId) return;
+
+    setLoadingAccount(true);
+    try {
+      const { data } = await accountsApi.getById(accountId);
+      setAccount(data);
+      setAccountLoadError(null);
+      dismissRequestToast(ACCOUNT_DETAIL_ERROR_TOAST_ID);
+    } catch (error) {
+      setAccountLoadError(
+        showRequestErrorToast(error, ACCOUNT_DETAIL_ERROR_TOAST_ID)
+      );
+    } finally {
+      setLoadingAccount(false);
+    }
+  }, [accountId]);
 
   useEffect(() => {
-    if (!accountId) return;
-    setLoadingAccount(true);
-    accountsApi
-      .getById(accountId)
-      .then(({ data }) => setAccount(data))
-      .catch((error) => toast.error(getErrorMessage(error)))
-      .finally(() => setLoadingAccount(false));
-  }, [accountId]);
+    void fetchAccount();
+  }, [fetchAccount]);
 
   const fetchTransactions = useCallback(async () => {
     if (!accountId) return;
@@ -93,8 +140,12 @@ export default function AccountDetailPage() {
       if (toDate) params.toDate = new Date(toDate + "T23:59:59").toISOString();
       const { data } = await accountsApi.getTransactions(accountId, params);
       setTransactions(data);
+      setTransactionsLoadError(null);
+      dismissRequestToast(ACCOUNT_TRANSACTIONS_ERROR_TOAST_ID);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      setTransactionsLoadError(
+        showRequestErrorToast(error, ACCOUNT_TRANSACTIONS_ERROR_TOAST_ID)
+      );
     } finally {
       setLoadingTx(false);
     }
@@ -104,7 +155,15 @@ export default function AccountDetailPage() {
     fetchTransactions();
   }, [fetchTransactions]);
 
-  const connectionState = useLiveAccountTransactions(accountId, fetchTransactions);
+  const handleAccountInvalidated = useCallback(() => {
+    void fetchAccount();
+    void fetchTransactions();
+  }, [fetchAccount, fetchTransactions]);
+
+  const connectionState = useLiveAccountTransactions(
+    accountId,
+    handleAccountInvalidated
+  );
 
   async function handleDeleteAccount() {
     if (!account) return;
@@ -118,7 +177,7 @@ export default function AccountDetailPage() {
     }
   }
 
-  if (loadingAccount) {
+  if (loadingAccount && !account) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -129,8 +188,15 @@ export default function AccountDetailPage() {
 
   if (!account) {
     return (
-      <div className="p-6">
-        <p className="text-muted-foreground">Счёт не найден</p>
+      <div className="p-6 space-y-4">
+        {accountLoadError ? (
+          <Alert>
+            <AlertTitle>Не удалось загрузить счёт</AlertTitle>
+            <AlertDescription>{accountLoadError}</AlertDescription>
+          </Alert>
+        ) : (
+          <p className="text-muted-foreground">Счёт не найден</p>
+        )}
       </div>
     );
   }
@@ -158,6 +224,15 @@ export default function AccountDetailPage() {
           <Trash2 /> Удалить счёт
         </Button>
       </div>
+
+      {accountLoadError && (
+        <Alert>
+          <AlertTitle>Не удалось обновить данные счёта</AlertTitle>
+          <AlertDescription>
+            Показываем последние успешно загруженные данные. {accountLoadError}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="max-w-2xl">
         <CardHeader>
@@ -201,6 +276,29 @@ export default function AccountDetailPage() {
             список обновляется только через REST.
           </p>
         </div>
+
+        {LIVE_CONNECTION_MESSAGES[connectionState] && (
+          <Alert>
+            <AlertTitle>
+              {LIVE_CONNECTION_MESSAGES[connectionState].title}
+            </AlertTitle>
+            <AlertDescription>
+              {LIVE_CONNECTION_MESSAGES[connectionState].description}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {transactionsLoadError && (
+          <Alert>
+            <AlertTitle>Не удалось обновить операции</AlertTitle>
+            <AlertDescription>
+              {transactions
+                ? "Показываем последние успешно загруженные данные. "
+                : ""}
+              {transactionsLoadError}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="flex items-end gap-3 flex-wrap">
           <div className="space-y-1.5">
@@ -260,7 +358,7 @@ export default function AccountDetailPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loadingTx ? (
+              {loadingTx && !transactions ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     {Array.from({ length: 5 }).map((_, j) => (
@@ -321,6 +419,10 @@ export default function AccountDetailPage() {
             </TableBody>
           </Table>
         </div>
+
+        {loadingTx && transactions && (
+          <p className="text-sm text-muted-foreground">Обновляем операции...</p>
+        )}
 
         {transactions && transactions.totalPages > 1 && (
           <div className="flex items-center justify-between">

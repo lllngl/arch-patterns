@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -22,7 +23,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useAuthStore } from "@/stores/auth";
 import { usersApi } from "@/api/users";
 import { accountsApi } from "@/api/accounts";
 import { loansApi } from "@/api/loans";
@@ -44,7 +44,6 @@ import {
   Banknote,
   ChevronLeft,
   ChevronRight,
-  KeyRound,
   Loader2,
   Lock,
   LockOpen,
@@ -55,6 +54,10 @@ import {
 } from "lucide-react";
 import { getErrorMessage } from "@/lib/http-error";
 import { RoleBadges } from "@/components/custom/RoleBadges";
+import {
+  dismissRequestToast,
+  showRequestErrorToast,
+} from "@/lib/request-feedback";
 
 const GENDER_LABELS: Record<string, string> = {
   MALE: "Мужской",
@@ -93,11 +96,14 @@ const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
 };
 
 const PAGE_SIZE = 10;
+const USER_DETAIL_ERROR_TOAST_ID = "user-detail-load-error";
+const USER_DETAIL_ACCOUNTS_ERROR_TOAST_ID = "user-detail-accounts-load-error";
+const USER_DETAIL_LOANS_ERROR_TOAST_ID = "user-detail-loans-load-error";
+const USER_DETAIL_ANALYTICS_ERROR_TOAST_ID = "user-detail-analytics-load-error";
 
 export default function UserDetailPage() {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
-  const currentUser = useAuthStore((s) => s.user);
   const [user, setUser] = useState<UserDTO | null>(null);
   const [accounts, setAccounts] = useState<Page<AccountDTO> | null>(null);
   const [loans, setLoans] = useState<Page<LoanResponse> | null>(null);
@@ -113,6 +119,12 @@ export default function UserDetailPage() {
   );
   const [overduePayments, setOverduePayments] =
     useState<Page<PaymentHistoryResponse> | null>(null);
+  const [userLoadError, setUserLoadError] = useState<string | null>(null);
+  const [accountsLoadError, setAccountsLoadError] = useState<string | null>(null);
+  const [loansLoadError, setLoansLoadError] = useState<string | null>(null);
+  const [analyticsLoadError, setAnalyticsLoadError] = useState<string | null>(
+    null
+  );
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -124,15 +136,24 @@ export default function UserDetailPage() {
   const [editGender, setEditGender] = useState<Gender>("MALE");
   const [editBirthDate, setEditBirthDate] = useState("");
 
-  useEffect(() => {
+  const fetchUserDetails = useCallback(async () => {
     if (!userId) return;
     setLoadingUser(true);
-    usersApi
-      .getById(userId)
-      .then(({ data }) => setUser(data))
-      .catch((error) => toast.error(getErrorMessage(error)))
-      .finally(() => setLoadingUser(false));
+    try {
+      const { data } = await usersApi.getById(userId);
+      setUser(data);
+      setUserLoadError(null);
+      dismissRequestToast(USER_DETAIL_ERROR_TOAST_ID);
+    } catch (error) {
+      setUserLoadError(showRequestErrorToast(error, USER_DETAIL_ERROR_TOAST_ID));
+    } finally {
+      setLoadingUser(false);
+    }
   }, [userId]);
+
+  useEffect(() => {
+    void fetchUserDetails();
+  }, [fetchUserDetails]);
 
   const fetchAccounts = useCallback(async () => {
     if (!userId) return;
@@ -145,8 +166,12 @@ export default function UserDetailPage() {
         sortDir: "ASC",
       });
       setAccounts(data);
+      setAccountsLoadError(null);
+      dismissRequestToast(USER_DETAIL_ACCOUNTS_ERROR_TOAST_ID);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      setAccountsLoadError(
+        showRequestErrorToast(error, USER_DETAIL_ACCOUNTS_ERROR_TOAST_ID)
+      );
     } finally {
       setLoadingAccounts(false);
     }
@@ -170,8 +195,12 @@ export default function UserDetailPage() {
         params.status = loanStatusFilter as LoanStatus;
       const { data } = await loansApi.getByUser(userId, params);
       setLoans(data);
+      setLoansLoadError(null);
+      dismissRequestToast(USER_DETAIL_LOANS_ERROR_TOAST_ID);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      setLoansLoadError(
+        showRequestErrorToast(error, USER_DETAIL_LOANS_ERROR_TOAST_ID)
+      );
     } finally {
       setLoadingLoans(false);
     }
@@ -197,8 +226,12 @@ export default function UserDetailPage() {
       ]);
       setCreditRating(creditRatingResponse.data);
       setOverduePayments(overduePaymentsResponse.data);
+      setAnalyticsLoadError(null);
+      dismissRequestToast(USER_DETAIL_ANALYTICS_ERROR_TOAST_ID);
     } catch (error) {
-      toast.error(getErrorMessage(error));
+      setAnalyticsLoadError(
+        showRequestErrorToast(error, USER_DETAIL_ANALYTICS_ERROR_TOAST_ID)
+      );
     } finally {
       setLoadingAnalytics(false);
     }
@@ -261,18 +294,6 @@ export default function UserDetailPage() {
     }
   }
 
-  async function handleRevokeSessions() {
-    if (!user) return;
-    if (!window.confirm(`Сбросить все сессии пользователя ${user.email}?`))
-      return;
-    try {
-      await usersApi.revokeSessions(user.id);
-      toast.success("Все сессии пользователя сброшены");
-    } catch (error) {
-      toast.error(getErrorMessage(error));
-    }
-  }
-
   async function handleDelete() {
     if (!user) return;
     if (!window.confirm(`Удалить пользователя ${user.email}?`)) return;
@@ -285,7 +306,7 @@ export default function UserDetailPage() {
     }
   }
 
-  if (loadingUser) {
+  if (loadingUser && !user) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -296,8 +317,15 @@ export default function UserDetailPage() {
 
   if (!user) {
     return (
-      <div className="p-6">
-        <p className="text-muted-foreground">Пользователь не найден</p>
+      <div className="p-6 space-y-4">
+        {userLoadError ? (
+          <Alert>
+            <AlertTitle>Не удалось загрузить пользователя</AlertTitle>
+            <AlertDescription>{userLoadError}</AlertDescription>
+          </Alert>
+        ) : (
+          <p className="text-muted-foreground">Пользователь не найден</p>
+        )}
       </div>
     );
   }
@@ -339,15 +367,19 @@ export default function UserDetailPage() {
           {user.isBlocked ? <LockOpen /> : <Lock />}
           {user.isBlocked ? "Разблокировать" : "Заблокировать"}
         </Button>
-        {currentUser?.id !== user.id && (
-          <Button variant="outline" size="sm" onClick={handleRevokeSessions}>
-            <KeyRound /> Сбросить сессии
-          </Button>
-        )}
         <Button variant="destructive" size="sm" onClick={handleDelete}>
           <Trash2 /> Удалить
         </Button>
       </div>
+
+      {userLoadError && (
+        <Alert>
+          <AlertTitle>Не удалось обновить карточку пользователя</AlertTitle>
+          <AlertDescription>
+            Показываем последние успешно загруженные данные. {userLoadError}
+          </AlertDescription>
+        </Alert>
+      )}
 
       <Card className="max-w-2xl">
         <CardHeader className="flex flex-row items-center justify-between">
@@ -486,7 +518,17 @@ export default function UserDetailPage() {
       <div className="space-y-3">
         <h2 className="text-lg font-semibold">Счета пользователя</h2>
 
-        {loadingAccounts ? (
+        {accountsLoadError && (
+          <Alert>
+            <AlertTitle>Не удалось обновить счета пользователя</AlertTitle>
+            <AlertDescription>
+              {accounts ? "Показываем последние успешно загруженные данные. " : ""}
+              {accountsLoadError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {loadingAccounts && !accounts ? (
           <div className="border rounded-md p-4 space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-4 w-full" />
@@ -577,6 +619,10 @@ export default function UserDetailPage() {
             )}
           </>
         )}
+
+        {loadingAccounts && accounts && (
+          <p className="text-sm text-muted-foreground">Обновляем счета пользователя...</p>
+        )}
       </div>
 
       <div className="space-y-3">
@@ -584,7 +630,18 @@ export default function UserDetailPage() {
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
           <div className="border rounded-md p-4 bg-muted/40 space-y-3">
             <p className="font-medium">Кредитная аналитика</p>
-            {loadingAnalytics ? (
+            {analyticsLoadError && (
+              <Alert>
+                <AlertTitle>Не удалось обновить кредитную аналитику</AlertTitle>
+                <AlertDescription>
+                  {creditRating || overduePayments
+                    ? "Показываем последние успешно загруженные данные. "
+                    : ""}
+                  {analyticsLoadError}
+                </AlertDescription>
+              </Alert>
+            )}
+            {loadingAnalytics && !creditRating ? (
               <div className="space-y-2">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <Skeleton key={index} className="h-6 w-full" />
@@ -633,11 +690,16 @@ export default function UserDetailPage() {
                 </div>
               </div>
             )}
+            {loadingAnalytics && creditRating && (
+              <p className="text-sm text-muted-foreground">
+                Обновляем кредитную аналитику...
+              </p>
+            )}
           </div>
 
           <div className="border rounded-md p-4 space-y-3">
             <p className="font-medium">Просроченные платежи</p>
-            {loadingAnalytics ? (
+            {loadingAnalytics && !overduePayments ? (
               <div className="space-y-2">
                 {Array.from({ length: 4 }).map((_, index) => (
                   <Skeleton key={index} className="h-10 w-full" />
@@ -694,6 +756,11 @@ export default function UserDetailPage() {
                 </Table>
               </div>
             )}
+            {loadingAnalytics && overduePayments && (
+              <p className="text-sm text-muted-foreground">
+                Обновляем просроченные платежи...
+              </p>
+            )}
           </div>
         </div>
 
@@ -719,7 +786,17 @@ export default function UserDetailPage() {
           </Select>
         </div>
 
-        {loadingLoans ? (
+        {loansLoadError && (
+          <Alert>
+            <AlertTitle>Не удалось обновить кредиты пользователя</AlertTitle>
+            <AlertDescription>
+              {loans ? "Показываем последние успешно загруженные данные. " : ""}
+              {loansLoadError}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {loadingLoans && !loans ? (
           <div className="border rounded-md p-4 space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-4 w-full" />
@@ -805,6 +882,10 @@ export default function UserDetailPage() {
               </div>
             )}
           </>
+        )}
+
+        {loadingLoans && loans && (
+          <p className="text-sm text-muted-foreground">Обновляем кредиты пользователя...</p>
         )}
       </div>
     </div>

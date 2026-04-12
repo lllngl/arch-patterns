@@ -50,8 +50,4 @@ export const usersApi = {
   unblock(userId: string) {
     return api.post(`/api/v1/users/${userId}/unblock`);
   },
-
-  revokeSessions(userId: string) {
-    return api.post(`/api/v1/users/${userId}/revoke-sessions`);
-  },
 };

@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -24,6 +25,10 @@ import type {
 import { toast } from "sonner";
 import { ArrowLeft, Check, X } from "lucide-react";
 import { getErrorMessage } from "@/lib/http-error";
+import {
+  dismissRequestToast,
+  showRequestErrorToast,
+} from "@/lib/request-feedback";
 
 const STATUS_LABELS: Record<LoanStatus, string> = {
   PENDING: "Ожидает одобрения",
@@ -50,6 +55,8 @@ const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   OVERDUE: "Просрочен",
   SKIPPED: "Пропущен",
 };
+const LOAN_DETAIL_ERROR_TOAST_ID = "loan-detail-load-error";
+const LOAN_ANALYTICS_ERROR_TOAST_ID = "loan-analytics-load-error";
 
 export default function LoanDetailPage() {
   const { loanId } = useParams<{ loanId: string }>();
@@ -62,54 +69,64 @@ export default function LoanDetailPage() {
   const [overduePayments, setOverduePayments] =
     useState<Page<PaymentHistoryResponse> | null>(null);
   const [loadingAnalytics, setLoadingAnalytics] = useState(true);
+  const [loanLoadError, setLoanLoadError] = useState<string | null>(null);
+  const [analyticsLoadError, setAnalyticsLoadError] = useState<string | null>(
+    null
+  );
 
-  useEffect(() => {
+  const fetchLoan = useCallback(async () => {
     if (!loanId) return;
     const currentLoanId = loanId;
 
-    async function loadLoan() {
-      setLoading(true);
-      try {
-        const { data } = await loansApi.getById(currentLoanId);
-        setLoan(data);
-      } catch (error) {
-        toast.error(getErrorMessage(error));
-      } finally {
-        setLoading(false);
-      }
+    setLoading(true);
+    try {
+      const { data } = await loansApi.getById(currentLoanId);
+      setLoan(data);
+      setLoanLoadError(null);
+      dismissRequestToast(LOAN_DETAIL_ERROR_TOAST_ID);
+    } catch (error) {
+      setLoanLoadError(showRequestErrorToast(error, LOAN_DETAIL_ERROR_TOAST_ID));
+    } finally {
+      setLoading(false);
     }
-
-    void loadLoan();
   }, [loanId]);
 
   useEffect(() => {
+    void fetchLoan();
+  }, [fetchLoan]);
+
+  const fetchAnalytics = useCallback(async () => {
     if (!loanId || !loan?.userId) return;
     const currentLoanId = loanId;
     const currentUserId = loan.userId;
 
-    async function loadAnalytics() {
-      setLoadingAnalytics(true);
-      try {
-        const [creditRatingResponse, overduePaymentsResponse] = await Promise.all([
-          loansApi.getCreditRatingByUser(currentUserId),
-          loansApi.getOverduePaymentsByLoan(currentLoanId, {
-            page: 0,
-            size: 10,
-            sortBy: "expectedPaymentDate",
-            sortDir: "DESC",
-          }),
-        ]);
-        setCreditRating(creditRatingResponse.data);
-        setOverduePayments(overduePaymentsResponse.data);
-      } catch (error) {
-        toast.error(getErrorMessage(error));
-      } finally {
-        setLoadingAnalytics(false);
-      }
+    setLoadingAnalytics(true);
+    try {
+      const [creditRatingResponse, overduePaymentsResponse] = await Promise.all([
+        loansApi.getCreditRatingByUser(currentUserId),
+        loansApi.getOverduePaymentsByLoan(currentLoanId, {
+          page: 0,
+          size: 10,
+          sortBy: "expectedPaymentDate",
+          sortDir: "DESC",
+        }),
+      ]);
+      setCreditRating(creditRatingResponse.data);
+      setOverduePayments(overduePaymentsResponse.data);
+      setAnalyticsLoadError(null);
+      dismissRequestToast(LOAN_ANALYTICS_ERROR_TOAST_ID);
+    } catch (error) {
+      setAnalyticsLoadError(
+        showRequestErrorToast(error, LOAN_ANALYTICS_ERROR_TOAST_ID)
+      );
+    } finally {
+      setLoadingAnalytics(false);
     }
-
-    void loadAnalytics();
   }, [loan?.userId, loanId]);
+
+  useEffect(() => {
+    void fetchAnalytics();
+  }, [fetchAnalytics]);
 
   async function handleApprove() {
     if (!loan) return;
@@ -155,7 +172,7 @@ export default function LoanDetailPage() {
     return new Date(val).toLocaleDateString("ru-RU");
   }
 
-  if (loading) {
+  if (loading && !loan) {
     return (
       <div className="p-6 space-y-4">
         <Skeleton className="h-8 w-48" />
@@ -166,8 +183,15 @@ export default function LoanDetailPage() {
 
   if (!loan) {
     return (
-      <div className="p-6">
-        <p className="text-muted-foreground">Кредит не найден</p>
+      <div className="p-6 space-y-4">
+        {loanLoadError ? (
+          <Alert>
+            <AlertTitle>Не удалось загрузить кредит</AlertTitle>
+            <AlertDescription>{loanLoadError}</AlertDescription>
+          </Alert>
+        ) : (
+          <p className="text-muted-foreground">Кредит не найден</p>
+        )}
       </div>
     );
   }
@@ -185,6 +209,15 @@ export default function LoanDetailPage() {
           {STATUS_LABELS[loan.status] ?? loan.status}
         </Badge>
       </div>
+
+      {loanLoadError && (
+        <Alert>
+          <AlertTitle>Не удалось обновить данные кредита</AlertTitle>
+          <AlertDescription>
+            Показываем последние успешно загруженные данные. {loanLoadError}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {loan.status === "PENDING" && (
         <div className="flex items-center gap-2">
@@ -260,7 +293,19 @@ export default function LoanDetailPage() {
           <CardTitle>Кредитный рейтинг заёмщика</CardTitle>
         </CardHeader>
         <CardContent>
-          {loadingAnalytics ? (
+          {analyticsLoadError && (
+            <Alert className="mb-4">
+              <AlertTitle>Не удалось обновить кредитную аналитику</AlertTitle>
+              <AlertDescription>
+                {creditRating || overduePayments
+                  ? "Показываем последние успешно загруженные данные. "
+                  : ""}
+                {analyticsLoadError}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {loadingAnalytics && !creditRating ? (
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {Array.from({ length: 8 }).map((_, index) => (
                 <Skeleton key={index} className="h-16 w-full" />
@@ -312,6 +357,12 @@ export default function LoanDetailPage() {
               </div>
             </div>
           )}
+
+          {loadingAnalytics && creditRating && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              Обновляем кредитную аналитику...
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -320,7 +371,7 @@ export default function LoanDetailPage() {
           <CardTitle>Просроченные платежи по кредиту</CardTitle>
         </CardHeader>
         <CardContent>
-          {loadingAnalytics ? (
+          {loadingAnalytics && !overduePayments ? (
             <div className="space-y-3">
               {Array.from({ length: 4 }).map((_, index) => (
                 <Skeleton key={index} className="h-10 w-full" />
@@ -378,6 +429,12 @@ export default function LoanDetailPage() {
                 </TableBody>
               </Table>
             </div>
+          )}
+
+          {loadingAnalytics && overduePayments && (
+            <p className="mt-3 text-sm text-muted-foreground">
+              Обновляем просроченные платежи...
+            </p>
           )}
         </CardContent>
       </Card>
