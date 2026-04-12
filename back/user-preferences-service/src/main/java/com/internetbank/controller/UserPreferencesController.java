@@ -1,7 +1,10 @@
 package com.internetbank.controller;
 
+import com.internetbank.common.dtos.PushTokenLookupRequest;
+import com.internetbank.common.dtos.PushTokenRecordResponse;
 import com.internetbank.common.security.AuthenticatedUser;
 import com.internetbank.dto.request.DeviceRegistrationRequest;
+import com.internetbank.dto.request.RegisterPushTokenRequest;
 import com.internetbank.dto.request.UpdatePreferencesRequest;
 import com.internetbank.dto.response.UserPreferencesResponse;
 import com.internetbank.service.UserPreferencesService;
@@ -9,6 +12,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -52,6 +56,22 @@ public class UserPreferencesController {
                                                                   @Valid @RequestBody DeviceRegistrationRequest request) {
 
         return ResponseEntity.ok(preferencesService.registerDevice(user.getId(), request));
+    }
+
+    @PutMapping("/devices/{deviceId}/push-token")
+    public ResponseEntity<UserPreferencesResponse> registerPushToken(@AuthenticationPrincipal AuthenticatedUser user,
+                                                                    @PathVariable String deviceId,
+                                                                    @Valid @RequestBody RegisterPushTokenRequest request) {
+
+        return ResponseEntity.ok(preferencesService.registerPushToken(user.getId(), deviceId, request));
+    }
+
+    @DeleteMapping("/devices/{deviceId}/push-token")
+    public ResponseEntity<Void> unregisterPushToken(@AuthenticationPrincipal AuthenticatedUser user,
+                                                    @PathVariable String deviceId) {
+
+        preferencesService.unregisterPushToken(user.getId(), deviceId);
+        return ResponseEntity.noContent().build();
     }
 
 
@@ -100,5 +120,12 @@ public class UserPreferencesController {
         UpdatePreferencesRequest request = new UpdatePreferencesRequest();
         request.setHiddenAccountIds(current.hiddenAccountsIds());
         return ResponseEntity.ok(preferencesService.updatePreferences(user.getId(), deviceId, request));
+    }
+
+    @PostMapping("/internal/push-tokens/query")
+    @PreAuthorize("@internalSecurity.hasInternalAccess()")
+    public ResponseEntity<List<PushTokenRecordResponse>> getPushTokens(@Valid @RequestBody PushTokenLookupRequest request) {
+
+        return ResponseEntity.ok(preferencesService.getPushTokens(request.userIds()));
     }
 }

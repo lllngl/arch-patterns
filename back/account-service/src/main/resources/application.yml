@@ -82,6 +82,10 @@ app:
     endpoint: /ws
     account-transactions-destination-prefix: /topic/accounts
     employee-operations-destination: /topic/employee/operations
+  firebase:
+    enabled: ${FIREBASE_ENABLED:false}
+    credentials-path: ${FIREBASE_CREDENTIALS_PATH:}
+    employee-operations-topic: ${FIREBASE_EMPLOYEE_OPERATIONS_TOPIC:employee-operations}
 
 logging:
   pattern:
