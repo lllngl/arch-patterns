@@ -2,6 +2,7 @@ package com.internetbank.monitoring_service.controllers;
 
 import com.internetbank.common.dtos.monitoring.TelemetryEventRequest;
 import com.internetbank.common.telemetry.MonitoringApiPaths;
+import com.internetbank.monitoring_service.dtos.FrontendTelemetryEventRequest;
 import com.internetbank.monitoring_service.services.TelemetryRecordService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,13 @@ public class MonitoringTelemetryIngestController {
     @PreAuthorize("@internalSecurity.hasInternalAccess()")
     public ResponseEntity<Void> ingest(@RequestBody @Valid TelemetryEventRequest request) {
         telemetryRecordService.save(request);
+        return ResponseEntity.accepted().build();
+    }
+
+    @PostMapping("/api/v1/monitoring/frontend/telemetry")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> ingestFrontend(@RequestBody @Valid FrontendTelemetryEventRequest request) {
+        telemetryRecordService.saveFrontend(request);
         return ResponseEntity.accepted().build();
     }
 }

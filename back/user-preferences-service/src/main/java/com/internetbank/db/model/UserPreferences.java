@@ -35,6 +35,9 @@ public class UserPreferences {
     @Column(name = "theme", nullable = false)
     private String theme;
 
+    @Column(name = "push_token", length = 512)
+    private String pushToken;
+
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(
             name = "hidden_accounts",

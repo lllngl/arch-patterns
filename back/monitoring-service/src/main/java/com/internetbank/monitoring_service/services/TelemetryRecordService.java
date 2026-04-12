@@ -1,12 +1,16 @@
 package com.internetbank.monitoring_service.services;
 
 import com.internetbank.common.dtos.monitoring.TelemetryEventRequest;
+import com.internetbank.common.telemetry.TraceContext;
+import com.internetbank.monitoring_service.dtos.FrontendTelemetryEventRequest;
 import com.internetbank.monitoring_service.dtos.RecentTelemetryErrorResponse;
 import com.internetbank.monitoring_service.dtos.TelemetrySummaryResponse;
 import com.internetbank.monitoring_service.dtos.TelemetryTimelinePointResponse;
 import com.internetbank.monitoring_service.models.TelemetryRecord;
+import com.internetbank.monitoring_service.models.TelemetrySource;
 import com.internetbank.monitoring_service.repositories.TelemetryRecordRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.MDC;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,10 +32,43 @@ public class TelemetryRecordService {
         telemetryRecordRepository.save(TelemetryRecord.builder()
                 .traceId(request.traceId())
                 .serviceName(request.serviceName())
+                .source(TelemetrySource.BACKEND)
+                .eventType("HTTP_REQUEST")
                 .method(request.method())
                 .path(request.path())
                 .statusCode(request.statusCode())
                 .durationMs(request.durationMs())
+                .retryCount(0)
+                .shortCircuited(false)
+                .channel("HTTP")
+                .error(request.error())
+                .errorMessage(request.errorMessage())
+                .occurredAt(request.occurredAt())
+                .build());
+    }
+
+    @Transactional
+    public void saveFrontend(FrontendTelemetryEventRequest request) {
+        String traceId = request.traceId();
+        if (traceId == null || traceId.isBlank()) {
+            traceId = MDC.get(TraceContext.MDC_KEY);
+        }
+        if (traceId == null || traceId.isBlank()) {
+            traceId = java.util.UUID.randomUUID().toString();
+        }
+
+        telemetryRecordRepository.save(TelemetryRecord.builder()
+                .traceId(traceId)
+                .serviceName(request.serviceName())
+                .source(TelemetrySource.FRONTEND)
+                .eventType(request.eventType())
+                .method(request.method())
+                .path(request.path())
+                .statusCode(request.statusCode() == null ? 0 : request.statusCode())
+                .durationMs(request.durationMs())
+                .retryCount(request.retryCount() == null ? 0 : request.retryCount())
+                .shortCircuited(Boolean.TRUE.equals(request.shortCircuited()))
+                .channel(request.channel())
                 .error(request.error())
                 .errorMessage(request.errorMessage())
                 .occurredAt(request.occurredAt())
@@ -39,18 +76,19 @@ public class TelemetryRecordService {
     }
 
     @Transactional(readOnly = true)
-    public TelemetrySummaryResponse getSummary(String serviceName, LocalDateTime from, LocalDateTime to) {
-        List<TelemetryRecord> records = loadRecords(serviceName, from, to);
+    public TelemetrySummaryResponse getSummary(String serviceName, TelemetrySource source, LocalDateTime from, LocalDateTime to) {
+        List<TelemetryRecord> records = loadRecords(serviceName, source, from, to);
         return buildSummary(serviceName, from, to, records);
     }
 
     @Transactional(readOnly = true)
     public List<TelemetryTimelinePointResponse> getTimeline(String serviceName,
+                                                            TelemetrySource source,
                                                             LocalDateTime from,
                                                             LocalDateTime to,
                                                             int bucketMinutes) {
         int normalizedBucketMinutes = Math.max(bucketMinutes, 1);
-        return loadRecords(serviceName, from, to).stream()
+        return loadRecords(serviceName, source, from, to).stream()
                 .collect(Collectors.groupingBy(
                         record -> truncateToBucket(record.getOccurredAt(), normalizedBucketMinutes),
                         Collectors.toList()
@@ -63,14 +101,28 @@ public class TelemetryRecordService {
     }
 
     @Transactional(readOnly = true)
-    public List<RecentTelemetryErrorResponse> getRecentErrors(String serviceName, int limit) {
+    public List<RecentTelemetryErrorResponse> getRecentErrors(String serviceName, TelemetrySource source, int limit) {
         int normalizedLimit = Math.max(limit, 1);
-        List<TelemetryRecord> records = (serviceName == null || serviceName.isBlank())
-                ? telemetryRecordRepository.findByErrorTrueOrderByOccurredAtDesc(PageRequest.of(0, normalizedLimit)).getContent()
-                : telemetryRecordRepository.findByServiceNameAndErrorTrueOrderByOccurredAtDesc(
-                        serviceName,
-                        PageRequest.of(0, normalizedLimit)
-                ).getContent();
+        List<TelemetryRecord> records;
+        if (serviceName == null || serviceName.isBlank()) {
+            records = source == null
+                    ? telemetryRecordRepository.findByErrorTrueOrderByOccurredAtDesc(PageRequest.of(0, normalizedLimit)).getContent()
+                    : telemetryRecordRepository.findBySourceAndErrorTrueOrderByOccurredAtDesc(
+                            source,
+                            PageRequest.of(0, normalizedLimit)
+                    ).getContent();
+        } else {
+            records = source == null
+                    ? telemetryRecordRepository.findByServiceNameAndErrorTrueOrderByOccurredAtDesc(
+                            serviceName,
+                            PageRequest.of(0, normalizedLimit)
+                    ).getContent()
+                    : telemetryRecordRepository.findByServiceNameAndSourceAndErrorTrueOrderByOccurredAtDesc(
+                            serviceName,
+                            source,
+                            PageRequest.of(0, normalizedLimit)
+                    ).getContent();
+        }
 
         return records.stream()
                 .map(record -> new RecentTelemetryErrorResponse(
@@ -86,11 +138,20 @@ public class TelemetryRecordService {
                 .toList();
     }
 
-    private List<TelemetryRecord> loadRecords(String serviceName, LocalDateTime from, LocalDateTime to) {
+    private List<TelemetryRecord> loadRecords(String serviceName, TelemetrySource source, LocalDateTime from, LocalDateTime to) {
         if (serviceName == null || serviceName.isBlank()) {
-            return telemetryRecordRepository.findByOccurredAtBetweenOrderByOccurredAtAsc(from, to);
+            return source == null
+                    ? telemetryRecordRepository.findByOccurredAtBetweenOrderByOccurredAtAsc(from, to)
+                    : telemetryRecordRepository.findBySourceAndOccurredAtBetweenOrderByOccurredAtAsc(source, from, to);
         }
-        return telemetryRecordRepository.findByServiceNameAndOccurredAtBetweenOrderByOccurredAtAsc(serviceName, from, to);
+        return source == null
+                ? telemetryRecordRepository.findByServiceNameAndOccurredAtBetweenOrderByOccurredAtAsc(serviceName, from, to)
+                : telemetryRecordRepository.findByServiceNameAndSourceAndOccurredAtBetweenOrderByOccurredAtAsc(
+                        serviceName,
+                        source,
+                        from,
+                        to
+                );
     }
 
     private TelemetrySummaryResponse buildSummary(String serviceName,

@@ -2,6 +2,8 @@ package com.internetbank.monitoring_service.models;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -34,6 +36,13 @@ public class TelemetryRecord {
     @Column(name = "service_name", nullable = false, length = 100)
     private String serviceName;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "source", nullable = false, length = 20)
+    private TelemetrySource source;
+
+    @Column(name = "event_type", length = 64)
+    private String eventType;
+
     @Column(name = "http_method", nullable = false, length = 16)
     private String method;
 
@@ -45,6 +54,15 @@ public class TelemetryRecord {
 
     @Column(name = "duration_ms", nullable = false)
     private Long durationMs;
+
+    @Column(name = "retry_count")
+    private Integer retryCount;
+
+    @Column(name = "short_circuited")
+    private Boolean shortCircuited;
+
+    @Column(name = "channel", length = 32)
+    private String channel;
 
     @Column(name = "is_error", nullable = false)
     private Boolean error;

@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Repository
@@ -17,6 +18,8 @@ public interface UserPreferencesRepository extends JpaRepository<UserPreferences
     Optional<UserPreferences> findByUserIdAndDeviceId(UUID userId, String deviceId);
 
     List<UserPreferences> findAllByUserId(UUID userId);
+
+    List<UserPreferences> findAllByUserIdInAndPushTokenIsNotNull(Set<UUID> userIds);
 
     @Modifying
     @Query("DELETE FROM UserPreferences up WHERE up.userId = :userId AND up.deviceId = :deviceId")

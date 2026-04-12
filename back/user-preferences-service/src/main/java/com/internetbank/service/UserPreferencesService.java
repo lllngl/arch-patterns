@@ -1,9 +1,11 @@
 package com.internetbank.service;
 
+import com.internetbank.common.dtos.PushTokenRecordResponse;
 import com.internetbank.common.exceptions.NotFoundException;
 import com.internetbank.db.model.UserPreferences;
 import com.internetbank.db.repository.UserPreferencesRepository;
 import com.internetbank.dto.request.DeviceRegistrationRequest;
+import com.internetbank.dto.request.RegisterPushTokenRequest;
 import com.internetbank.dto.request.UpdatePreferencesRequest;
 import com.internetbank.dto.response.UserPreferencesResponse;
 import com.internetbank.mapper.UserPreferencesMapper;
@@ -79,8 +81,45 @@ public class UserPreferencesService {
     }
 
     @Transactional
+    public UserPreferencesResponse registerPushToken(UUID userId, String deviceId, RegisterPushTokenRequest request) {
+        UserPreferences preferences = preferencesRepository.findByUserIdAndDeviceId(userId, deviceId)
+                .orElseGet(() -> preferencesRepository.save(UserPreferences.builder()
+                        .userId(userId)
+                        .deviceId(deviceId)
+                        .theme("LIGHT")
+                        .hiddenAccountIds(Set.of())
+                        .build()));
+
+        preferences.setPushToken(request.pushToken());
+        UserPreferences saved = preferencesRepository.save(preferences);
+        log.info("Registered push token for user: {} on device: {}", userId, deviceId);
+        return mapper.toDto(saved);
+    }
+
+    @Transactional
+    public void unregisterPushToken(UUID userId, String deviceId) {
+        UserPreferences preferences = preferencesRepository.findByUserIdAndDeviceId(userId, deviceId)
+                .orElseThrow(() -> new NotFoundException(
+                        "Preferences not found for user: " + userId + " and device: " + deviceId));
+        preferences.setPushToken(null);
+        preferencesRepository.save(preferences);
+        log.info("Removed push token for user: {} on device: {}", userId, deviceId);
+    }
+
+    @Transactional
     public void unregisterDevice(UUID userId, String deviceId) {
         preferencesRepository.deleteByUserIdAndDeviceId(userId, deviceId);
         log.info("Unregistered device: {} for user: {}", deviceId, userId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<PushTokenRecordResponse> getPushTokens(Set<UUID> userIds) {
+        return preferencesRepository.findAllByUserIdInAndPushTokenIsNotNull(userIds).stream()
+                .map(preferences -> new PushTokenRecordResponse(
+                        preferences.getUserId(),
+                        preferences.getDeviceId(),
+                        preferences.getPushToken()
+                ))
+                .toList();
     }
 }
