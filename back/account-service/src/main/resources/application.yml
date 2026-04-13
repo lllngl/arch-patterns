@@ -35,11 +35,11 @@ spring:
         max-poll-records: 10
         properties:
           retry.backoff.ms: 1000
-      listener:
-        ack-mode: manual
       properties:
         spring.json.trusted.packages: "com.internetbank.account_service.messaging"
         spring.json.value.default.type: com.internetbank.account_service.messaging.AccountOperationCommand
+    listener:
+      ack-mode: manual
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
