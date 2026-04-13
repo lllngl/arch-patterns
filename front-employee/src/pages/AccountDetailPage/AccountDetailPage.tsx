@@ -271,10 +271,6 @@ export default function AccountDetailPage() {
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <h2 className="text-lg font-semibold">История операций</h2>
-          <p className="text-muted-foreground text-sm">
-            Realtime работает по push invalidation. Если WS backend не настроен,
-            список обновляется только через REST.
-          </p>
         </div>
 
         {LIVE_CONNECTION_MESSAGES[connectionState] && (
