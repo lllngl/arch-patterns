@@ -2,10 +2,11 @@ import { oauthApi } from "../../api/oauthApi";
 import { tokenStorage } from "../../auth/tokenStorage";
 import {
   createPkceRequest,
+  consumePkceState,
   consumeOAuthState,
   consumePkceVerifier,
-  peekOAuthState,
-  peekPkceVerifier,
+  hasOAuthState,
+  peekPkceVerifierByState,
 } from "../../oauth/pkce";
 import { getOAuthAuthorizationEndpoint, getOAuthClientId, getOAuthRedirectUri } from "../../oauth/oauthConfig";
 import type { OAuthTokenRequest } from "../../contracts/oauth";
@@ -46,12 +47,11 @@ export async function completeOAuthLoginFromCallback(params: OAuthCallbackParams
     throw new Error("Отсутствует code или state в ответе сервиса аутентификации.");
   }
 
-  const expectedState = peekOAuthState();
-  if (!expectedState || expectedState !== params.state) {
+  if (!hasOAuthState(params.state)) {
     throw new Error("Некорректный state (возможная CSRF-атака).");
   }
 
-  const codeVerifier = peekPkceVerifier();
+  const codeVerifier = peekPkceVerifierByState(params.state);
   if (!codeVerifier) {
     throw new Error("Отсутствует PKCE code_verifier.");
   }
@@ -74,8 +74,8 @@ export async function completeOAuthLoginFromCallback(params: OAuthCallbackParams
     tokenStorage.setTokens(tokens.accessToken, tokens.refreshToken);
     return loadUserProfileForClientApp();
   } finally {
-    // After exchange attempt (or deduped parallel run), clear so retries / React Strict Mode
-    // don’t see a mismatch on the second effect invocation.
+    // Clean the exact callback state first; legacy keys are cleaned as fallback.
+    consumePkceState(params.state);
     consumeOAuthState();
     consumePkceVerifier();
   }

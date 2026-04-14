@@ -29,6 +29,10 @@ export default defineConfig({
         target: 'http://localhost:9010',
         changeOrigin: true,
       },
+      '/api/v1/monitoring': {
+        target: 'http://localhost:9015',
+        changeOrigin: true,
+      },
       '/ws': {
         target: 'http://localhost:9005',
         changeOrigin: true,
