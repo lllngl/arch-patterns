@@ -35,14 +35,8 @@ export const useAppSettingsStore = create<AppSettingsState>((set, get) => ({
   setTheme: async (theme) => {
     applyThemeToDom(theme);
     set({ theme });
-    const { settings: next, syncedToServer } = await appSettingsApi.patchSettings({ theme });
+    const { settings: next } = await appSettingsApi.patchSettings({ theme });
     set({ theme: next.theme, hiddenAccountIds: next.hiddenAccountIds });
-    if (!syncedToServer) {
-      useNotificationStore.getState().pushToast(
-        "info",
-        "Тема сохранена только в этом браузере. Для синхронизации между устройствами (требование курса) нужен user-preferences-service на порту 9010.",
-      );
-    }
   },
 
   toggleHiddenAccount: async (accountId) => {
